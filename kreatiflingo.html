@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reztroid Spark - Content Brainstorm & Feed Lab</title>
+  
+  <!-- Plus Jakarta Sans Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- HTML2Canvas (Untuk Ekspor PNG) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- SortableJS (Untuk Drag and Drop) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            brandPurple: '#5338FF',
+            brandPurpleDark: '#3A22D6',
+            brandPurpleLight: '#EEECFF',
+            brandLime: '#CCFF00',
+            brandLimeDark: '#A8D600',
+            darkText: '#0F172A',
+            softBg: '#F8FAFC',
+            duoCardBorder: '#E2E8F0',
+          },
+          boxShadow: {
+            'duo-purple': '0 4px 0 #3A22D6',
+            'duo-lime': '0 4px 0 #A8D600',
+            'duo-amber': '0 4px 0 #D97706',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: "Plus Jakarta Sans", sans-serif;
+      background-color: #F8FAFC;
+      color: #0F172A;
+      user-select: none;
+    }
+    
+    .btn-duo-purple { background-color: #5338FF; color: white; border-bottom: 4px solid #3A22D6; transition: all 0.08s ease; }
+    .btn-duo-purple:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 1px; }
+
+    .btn-duo-lime { background-color: #CCFF00; color: #0F172A; border-bottom: 4px solid #A8D600; transition: all 0.08s ease; }
+    .btn-duo-lime:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 1px; }
+
+    .btn-duo-white { background-color: #FFFFFF; color: #0F172A; border: 2px solid #E2E8F0; border-bottom: 4px solid #CBD5E1; transition: all 0.08s ease; }
+    .btn-duo-white:active:not(:disabled) { transform: translateY(3px); border-bottom-width: 2px; }
+
+    .duo-card {
+      border: 2px solid #E2E8F0; border-bottom: 4px solid #CBD5E1; border-radius: 1.25rem;
+      background: white; transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+    
+    .drag-ghost { opacity: 0.4; background-color: #EEECFF; border: 2px dashed #5338FF; }
+
+    @keyframes duoWobble {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-4deg) scale(1.05); }
+      75% { transform: rotate(4deg) scale(1.05); }
+    }
+    .animate-mascot { animation: duoWobble 4s infinite ease-in-out; }
+    
+    /* Animasi membal khusus untuk loading screen */
+    @keyframes superBounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-25px) scale(1.05); }
+    }
+    .animate-super-bounce { animation: superBounce 0.8s cubic-bezier(0.28, 0.84, 0.42, 1) infinite; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F1F5F9; }
+    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased relative overflow-x-hidden">
+
+  <!-- ==================== SPLASH / LOADING SCREEN ==================== -->
+  <div id="loading-screen" class="fixed inset-0 z-[9999] bg-brandPurple flex flex-col items-center justify-center text-white transition-opacity duration-700 ease-in-out">
+    
+    <!-- Bouncing Mascot -->
+    <div class="mb-8 w-24 h-24 rounded-3xl bg-brandLime shadow-duo-lime flex items-center justify-center text-6xl animate-super-bounce text-brandPurple border-b-8 border-brandLimeDark">
+      👾
+    </div>
+    
+    <!-- Branding -->
+    <h1 class="text-4xl font-black mb-2 tracking-tight">Reztroid<span class="text-brandLime">Spark</span></h1>
+    <p class="font-bold text-brandPurpleLight/80 mb-8 tracking-wide text-sm">Menyiapkan Ruang Kerjamu...</p>
+    
+    <!-- Progress Bar Container -->
+    <div class="w-64 sm:w-80 bg-brandPurpleDark h-5 rounded-full overflow-hidden border-2 border-brandPurpleDark/50 shadow-inner relative">
+      <!-- Loading Fill -->
+      <div id="loading-bar" class="bg-brandLime h-full w-0 transition-all duration-300 rounded-full relative overflow-hidden">
+        <!-- Shine effect inside bar -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-white/30"></div>
+      </div>
+    </div>
+    
+    <!-- Percentage Text -->
+    <p id="loading-text" class="mt-4 font-black text-brandLime text-2xl tracking-tighter drop-shadow-md">0%</p>
+  </div>
+  <!-- =============================================================== -->
+
+  <header class="sticky top-0 z-40 bg-white border-b-2 border-slate-200 px-4 py-3 shadow-sm">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('board')">
+        <div class="w-10 h-10 rounded-2xl bg-brandPurple flex items-center justify-center text-brandLime font-black text-xl shadow-duo-purple animate-mascot">👾</div>
+        <div>
+          <span class="font-black text-xl tracking-tight text-brandPurple">Reztroid<span class="text-brandLime bg-brandPurple px-1.5 py-0.5 rounded-lg ml-0.5">Spark</span></span>
+          <p class="text-[11px] font-bold text-slate-400 hidden sm:block uppercase tracking-wider">Cloud Synced ☁️</p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <button id="nav-board" onclick="switchTab('board')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-white text-brandPurple shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Ideation
+        </button>
+        <button id="nav-feed" onclick="switchTab('feed')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i> Feed
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-brandPurpleLight text-brandPurple font-extrabold text-sm border-2 border-purple-100">
+          <span>⚡</span><span id="stat-xp">0</span> XP
+        </div>
+        <button onclick="openNewIdeaModal()" class="btn-duo-lime flex items-center gap-1.5 px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i><span class="hidden sm:inline">Tambah Ide</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- IDEATION BOARD -->
+    <div id="tab-board" class="space-y-8">
+      <div class="bg-gradient-to-r from-brandPurple to-indigo-700 text-white rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-duo-purple">
+        <h1 class="text-2xl sm:text-4xl font-black mb-2">Waktunya Eksekusi Konten Reztroid!</h1>
+        <p class="text-purple-100 mb-6 font-medium">Tarik (Drag) kartu ide untuk memindahkan stage. Tersimpan otomatis di Google Sheets.</p>
+        <button onclick="generateRandomPrompt()" class="btn-duo-lime px-4 py-2.5 rounded-2xl font-black text-sm flex items-center gap-2">
+          <i data-lucide="dice-5" class="w-4 h-4"></i> Prompt Reztroid
+        </button>
+      </div>
+
+      <!-- Quick Prompt Card -->
+      <div id="prompt-card" class="hidden duo-card p-5 bg-amber-50 border-amber-300">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="text-2xl bg-amber-400 w-12 h-12 flex items-center justify-center rounded-2xl shadow-duo-amber">⚡</div>
+            <div>
+              <span class="text-xs font-black uppercase text-amber-700" id="prompt-tag">Hook</span>
+              <p class="font-extrabold text-slate-800" id="prompt-text">...</p>
+            </div>
+          </div>
+          <button onclick="adoptPromptToIdea()" class="btn-duo-purple px-4 py-2 rounded-xl font-bold text-xs">Pakai Ide (+20 XP)</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+        <!-- Kanban Columns -->
+        <div class="flex flex-col gap-3">
+          <h2 class="font-extrabold text-xs uppercase bg-white border-2 border-slate-200 p-2 rounded-2xl text-center">1. Spark Ide</h2>
+          <div id="col-spark" data-stage="spark" class="kanban-col flex flex-col gap-3 min-h-[340px] p-2 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300"></div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <h2 class="font-extrabold text-xs uppercase bg-white border-2 border-slate-200 p-2 rounded-2xl text-center">2. Draft/Hook</h2>
+          <div id="col-draft" data-stage="draft" class="kanban-col flex flex-col gap-3 min-h-[340px] p-2 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300"></div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <h2 class="font-extrabold text-xs uppercase bg-white border-2 border-slate-200 p-2 rounded-2xl text-center">3. Visual Design</h2>
+          <div id="col-visual" data-stage="visual" class="kanban-col flex flex-col gap-3 min-h-[340px] p-2 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300"></div>
+        </div>
+        <div class="flex flex-col gap-3">
+          <h2 class="font-extrabold text-xs uppercase bg-emerald-50 border-2 border-emerald-200 text-emerald-700 p-2 rounded-2xl text-center">4. Siap Tayang</h2>
+          <div id="col-ready" data-stage="ready" class="kanban-col flex flex-col gap-3 min-h-[340px] p-2 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEED DESIGNER -->
+    <div id="tab-feed" class="hidden space-y-6">
+      <div class="flex justify-between items-center bg-white p-5 rounded-3xl border-2 border-slate-200">
+        <h2 class="text-2xl font-black">Feed Designer 3x3</h2>
+        <button onclick="exportFeedPNG()" class="btn-duo-purple px-4 py-2 rounded-xl text-xs font-black flex gap-2">
+          <i data-lucide="download" class="w-4 h-4"></i> Ekspor PNG
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div class="lg:col-span-7 flex justify-center">
+          <div id="feed-mockup" class="w-full max-w-md bg-white rounded-[2.5rem] border-4 border-slate-800 p-5 shadow-xl relative">
+            <div class="w-32 h-4 bg-slate-800 rounded-full mx-auto mb-4"></div>
+            <div id="feed-grid" class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1.5 rounded-2xl"></div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 duo-card p-5 bg-white space-y-4">
+          <h3 class="font-extrabold text-sm text-darkText border-b pb-2">Customizer Slot</h3>
+          <input type="text" id="inspector-title" oninput="updateActiveTile()" placeholder="Headline Content" class="w-full px-3 py-2 text-sm font-bold border-2 rounded-xl outline-none focus:border-brandPurple">
+          <input type="text" id="inspector-sub" oninput="updateActiveTile()" placeholder="Sub-text" class="w-full px-3 py-2 text-xs font-semibold border-2 rounded-xl mt-2 outline-none focus:border-brandPurple">
+          
+          <div class="grid grid-cols-4 gap-2 mt-4">
+            <button onclick="setTileColor('bg-brandPurple text-white')" class="h-8 rounded bg-brandPurple border-2 border-brandPurpleDark"></button>
+            <button onclick="setTileColor('bg-brandLime text-darkText')" class="h-8 rounded bg-brandLime border-2 border-brandLimeDark"></button>
+            <button onclick="setTileColor('bg-slate-900 text-white')" class="h-8 rounded bg-slate-900 border-2 border-black"></button>
+            <button onclick="setTileColor('bg-white text-darkText border-2')" class="h-8 rounded bg-white border-2 border-slate-300"></button>
+          </div>
+          
+          <button onclick="saveActiveTile()" class="btn-duo-purple w-full py-2.5 rounded-2xl text-xs mt-4">SIMPAN SLOT</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- MODAL NEW IDEA -->
+  <div id="modal-idea" class="fixed inset-0 z-50 bg-slate-900/60 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl">
+      <h3 class="font-black text-lg">Tambah Ide Baru</h3>
+      <input type="text" id="idea-title" placeholder="Judul Hook..." class="w-full px-4 py-2.5 border-2 rounded-xl font-bold outline-none focus:border-brandPurple">
+      <textarea id="idea-notes" rows="3" placeholder="Catatan/Script" class="w-full px-4 py-2 border-2 rounded-xl text-sm font-medium outline-none focus:border-brandPurple resize-none"></textarea>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeNewIdeaModal()" class="btn-duo-white px-4 py-2 rounded-xl text-xs font-bold">Batal</button>
+        <button onclick="handleIdeaSubmit()" class="btn-duo-purple px-5 py-2 rounded-xl text-xs font-black">Simpan Ide</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all px-5 py-3 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-brandLime flex items-center gap-2">
+    <span>✨</span>
+    <p id="toast-msg" class="text-xs font-medium"></p>
+  </div>
+
+  <script>
+    // --- GOOGLE SHEETS API URL ---
+    const API_URL = "https://script.google.com/macros/s/AKfycbwb3_V6j3H_n4LhbQ2N-Mpxmat_VhY7mfJXuasrWjPK5W6NCcOX_3VNPTsB2FTSOFHl3g/exec";
+
+    let userState = { xp: 120, streak: 7 };
+    let ideas = [];
+    let feedGrid = [];
+    let activeTileIndex = 0;
+
+    const reztroidPrompts = [
+      { tag: 'Promo Reztroid', text: 'Cara hemat 50% langganan Netflix premium bulan ini.' },
+      { tag: 'Edukasi IMEI', text: 'HP ex-inter tiba-tiba hilang sinyal? Ini solusi unlock IMEI permanen.' },
+      { tag: 'Tools Desain', text: '3 Canva template hacks buat desain feed jualanmu makin pro.' }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      startLoadingScreen();
+    });
+
+    // --- LOADING SCREEN LOGIC ---
+    function startLoadingScreen() {
+      let loadProgress = 0;
+      const loadingBar = document.getElementById('loading-bar');
+      const loadingText = document.getElementById('loading-text');
+      const loadingScreen = document.getElementById('loading-screen');
+
+      // Animasi palsu sementara menunggu fetch()
+      let loadInterval = setInterval(() => {
+        if (loadProgress < 85) {
+          loadProgress += Math.floor(Math.random() * 10) + 1; // Naik 1-10% random
+          if (loadProgress > 85) loadProgress = 85; // Tahan di 85% sampai data asli selesai di-fetch
+          loadingBar.style.width = loadProgress + '%';
+          loadingText.innerText = loadProgress + '%';
+        }
+      }, 100);
+
+      // Jalankan proses tarik data
+      initAppFromCloud(loadInterval, loadProgress, loadingBar, loadingText, loadingScreen);
+    }
+
+    // 1. PULL DATA FROM GOOGLE SHEETS
+    async function initAppFromCloud(loadInterval, loadProgress, loadingBar, loadingText, loadingScreen) {
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        
+        if(data.userState && Object.keys(data.userState).length > 0) userState = data.userState;
+        if(data.ideas && data.ideas.length > 0) ideas = data.ideas;
+        if(data.feedGrid && data.feedGrid.length > 0) {
+          feedGrid = data.feedGrid;
+        } else {
+          for(let i=0; i<9; i++) feedGrid.push({ id: i, title: `Slot #${i+1}`, sub: 'Draft', type: 'single', color: 'bg-white text-darkText border-2' });
+        }
+        
+        document.getElementById('stat-xp').innerText = userState.xp;
+        renderColumns();
+        renderFeedGrid();
+        initDragAndDrop();
+        
+        // Selesaikan Loading Screen
+        finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, "Tersinkronisasi!");
+
+      } catch(err) {
+        console.error("Gagal load API:", err);
+        // Tetap tutup loading screen meski error agar web tetap bisa dipakai
+        finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, "Offline Mode");
+      }
+    }
+
+    function finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, successText) {
+      clearInterval(loadInterval);
+      loadingBar.style.width = '100%';
+      loadingText.innerText = '100%';
+      
+      // Tunggu setengah detik di 100% biar terlihat mantap
+      setTimeout(() => {
+        loadingText.innerText = successText;
+        setTimeout(() => {
+          loadingScreen.classList.add('opacity-0');
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 700);
+        }, 500);
+      }, 400);
+    }
+
+    // 2. PUSH DATA TO GOOGLE SHEETS (Background Sync)
+    function syncToCloud() {
+      const payload = { userState, ideas, feedGrid };
+      fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors', 
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      }).then(() => console.log("☁️ Synced to Sheets")).catch(err => console.error(err));
+    }
+
+    // TAB LOGIC
+    function switchTab(tabId) {
+      document.getElementById('tab-board').classList.add('hidden');
+      document.getElementById('tab-feed').classList.add('hidden');
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    }
+
+    // KANBAN RENDER
+    function renderColumns() {
+      ['spark', 'draft', 'visual', 'ready'].forEach(stage => {
+        const col = document.getElementById(`col-${stage}`);
+        col.innerHTML = '';
+        ideas.filter(i => i.stage === stage).forEach(idea => {
+          const card = document.createElement('div');
+          card.className = "duo-card p-3.5 cursor-grab bg-white text-xs hover:border-brandPurple transition-colors";
+          card.dataset.id = idea.id;
+          card.innerHTML = `<h4 class="font-bold text-darkText mb-1.5 leading-snug">${idea.title}</h4><p class="text-[10px] text-slate-500 line-clamp-2">${idea.notes || ''}</p>`;
+          col.appendChild(card);
+        });
+      });
+    }
+
+    // DRAG AND DROP KANBAN
+    function initDragAndDrop() {
+      document.querySelectorAll('.kanban-col').forEach(col => {
+        new Sortable(col, {
+          group: 'kanban',
+          animation: 150,
+          ghostClass: 'drag-ghost',
+          onEnd: (evt) => {
+            const ideaId = evt.item.dataset.id;
+            const newStage = evt.to.dataset.stage;
+            const ideaIndex = ideas.findIndex(i => i.id == ideaId);
+            if (ideaIndex > -1) {
+              ideas[ideaIndex].stage = newStage;
+              if (newStage === 'ready') { userState.xp += 15; document.getElementById('stat-xp').innerText = userState.xp; showToast('🎉 Siap Tayang! +15 XP'); triggerConfetti(); }
+              syncToCloud(); 
+            }
+          }
+        });
+      });
+    }
+
+    // ADD IDEA
+    function openNewIdeaModal() { document.getElementById('modal-idea').classList.remove('hidden'); }
+    function closeNewIdeaModal() { document.getElementById('modal-idea').classList.add('hidden'); }
+    
+    function handleIdeaSubmit() {
+      const title = document.getElementById('idea-title').value;
+      const notes = document.getElementById('idea-notes').value;
+      if (!title) return;
+
+      ideas.push({ id: Date.now(), title, stage: 'spark', format: 'Single', platform: 'Instagram', tag: 'Umum', notes, date: new Date().toISOString() });
+      userState.xp += 10;
+      document.getElementById('stat-xp').innerText = userState.xp;
+      
+      closeNewIdeaModal();
+      renderColumns();
+      syncToCloud(); 
+      showToast('⚡ Ide Tersimpan ke Cloud! (+10 XP)');
+      document.getElementById('idea-title').value = '';
+      document.getElementById('idea-notes').value = '';
+    }
+
+    // FEED GRID
+    function renderFeedGrid() {
+      const grid = document.getElementById('feed-grid');
+      grid.innerHTML = '';
+      feedGrid.forEach((tile, i) => {
+        const div = document.createElement('div');
+        div.className = `p-2 aspect-square rounded-xl cursor-pointer transition-all flex flex-col justify-center ${tile.color} ${activeTileIndex === i ? 'ring-4 ring-brandPurple scale-105' : 'hover:scale-95'}`;
+        div.innerHTML = `<p class="text-[9px] font-bold uppercase opacity-70">${tile.sub}</p><h5 class="text-[11px] font-extrabold leading-tight mt-1 line-clamp-3">${tile.title}</h5>`;
+        div.onclick = () => { activeTileIndex = i; renderFeedGrid(); document.getElementById('inspector-title').value = tile.title; document.getElementById('inspector-sub').value = tile.sub; };
+        grid.appendChild(div);
+      });
+    }
+
+    function updateActiveTile() {
+      feedGrid[activeTileIndex].title = document.getElementById('inspector-title').value;
+      feedGrid[activeTileIndex].sub = document.getElementById('inspector-sub').value;
+      renderFeedGrid();
+    }
+    
+    function setTileColor(color) {
+      feedGrid[activeTileIndex].color = color;
+      renderFeedGrid();
+    }
+
+    function saveActiveTile() {
+      userState.xp += 5;
+      document.getElementById('stat-xp').innerText = userState.xp;
+      syncToCloud(); 
+      showToast('✅ Slot Feed Disimpan! (+5 XP)');
+    }
+
+    // DADU PROMPT
+    function generateRandomPrompt() {
+      const p = reztroidPrompts[Math.floor(Math.random() * reztroidPrompts.length)];
+      document.getElementById('prompt-tag').innerText = p.tag;
+      document.getElementById('prompt-text').innerText = p.text;
+      document.getElementById('prompt-card').classList.remove('hidden');
+    }
+    function adoptPromptToIdea() {
+      document.getElementById('idea-title').value = document.getElementById('prompt-text').innerText;
+      document.getElementById('prompt-card').classList.add('hidden');
+      openNewIdeaModal();
+    }
+
+    // EXPORT PNG
+    function exportFeedPNG() {
+      showToast('📸 Mengekspor gambar...');
+      html2canvas(document.getElementById('feed-mockup'), { scale: 2, backgroundColor: null }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Reztroid-Feed-${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        userState.xp += 20;
+        document.getElementById('stat-xp').innerText = userState.xp;
+        syncToCloud();
+        triggerConfetti();
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      document.getElementById('toast-msg').innerText = msg;
+      t.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => t.classList.add('translate-y-24', 'opacity-0'), 3000);
+    }
+
+    function triggerConfetti() {
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+    }
+  </script>
+</body>
+</html>
