@@ -22,9 +22,6 @@
   <!-- HTML2Canvas untuk Ekspor Feed ke PNG -->
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
-  <!-- SortableJS untuk Drag and Drop -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
   <script>
     tailwind.config = {
       theme: {
@@ -40,6 +37,15 @@
             brandLimeDark: '#A8D600',
             darkText: '#0F172A',
             softBg: '#F8FAFC',
+            duoCardBorder: '#E2E8F0',
+          },
+          boxShadow: {
+            'duo-purple': '0 4px 0 #3A22D6',
+            'duo-lime': '0 4px 0 #A8D600',
+            'duo-white': '0 4px 0 #CBD5E1',
+            'duo-gray': '0 4px 0 #94A3B8',
+            'duo-emerald': '0 4px 0 #059669',
+            'duo-amber': '0 4px 0 #D97706',
           }
         }
       }
@@ -96,6 +102,9 @@
       background: white;
       transition: transform 0.15s ease, border-color 0.15s ease;
     }
+    .duo-card:hover {
+      border-color: #5338FF;
+    }
 
     /* Wobbly mascot animation */
     @keyframes duoWobble {
@@ -103,415 +112,1577 @@
       25% { transform: rotate(-4deg) scale(1.05); }
       75% { transform: rotate(4deg) scale(1.05); }
     }
-    .animate-mascot { animation: duoWobble 4s infinite ease-in-out; }
-
-    /* Animasi membal untuk loading screen */
-    @keyframes superBounce {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-25px) scale(1.05); }
+    .animate-mascot {
+      animation: duoWobble 4s infinite ease-in-out;
     }
-    .animate-super-bounce { animation: superBounce 0.8s cubic-bezier(0.28, 0.84, 0.42, 1) infinite; }
+
+    /* Animasi membal khusus untuk loading screen */
+    @keyframes superBounce {
+      0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+      50% { transform: translateY(-28px) scale(1.08) rotate(-4deg); }
+    }
+    .animate-super-bounce {
+      animation: superBounce 0.75s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+    }
+
+    /* Pop-in animation for new ideas */
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop-in {
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
 
     /* Drag & Drop Visual Cues */
     .dragging { opacity: 0.5; transform: scale(0.95); border-color: #5338FF; z-index: 50; }
-    .drag-ghost { opacity: 0.4; background-color: #EEECFF; border: 2px dashed #5338FF; border-radius: 1.25rem; }
+    .drag-over-col { border-color: #5338FF !important; background-color: #EEECFF !important; }
+    .drag-over-tile { border-color: #5338FF !important; transform: scale(1.05); z-index: 10; opacity: 0.8; }
 
     /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #F1F5F9; }
-    ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94A3B8;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased relative overflow-x-hidden">
+<body class="min-h-screen flex flex-col antialiased text-darkText selection:bg-brandLime selection:text-darkText">
 
   <!-- ==================== SPLASH / LOADING SCREEN ==================== -->
-  <div id="loading-screen" class="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center text-darkText transition-opacity duration-700 ease-in-out">
+  <div id="loading-screen" class="fixed inset-0 z-[9999] bg-brandPurple flex flex-col items-center justify-center text-white transition-opacity duration-700 ease-in-out">
     
-    <div class="mb-8 w-24 h-24 rounded-3xl bg-brandPurple flex items-center justify-center text-6xl animate-super-bounce text-brandLime border-b-8 border-brandPurpleDark shadow-xl">
+    <!-- Mascot Reztroid Mantul -->
+    <div class="mb-7 w-24 h-24 rounded-3xl bg-brandLime shadow-duo-lime flex items-center justify-center text-6xl animate-super-bounce text-brandPurple border-b-8 border-brandLimeDark">
       👾
     </div>
     
-    <h1 class="text-4xl font-black mb-2 tracking-tight text-brandPurple">Reztroid<span class="text-white bg-brandLime px-2 py-0.5 rounded-lg ml-1">Spark</span></h1>
-    <p class="font-bold text-slate-400 mb-8 tracking-wide text-sm uppercase">CLOUD SYNCED ☁️</p>
+    <!-- Judul Brand -->
+    <div class="flex items-center gap-2 mb-2">
+      <span class="font-black text-4xl tracking-tight text-white">Reztroid</span>
+      <span class="font-black text-2xl uppercase bg-brandLime text-darkText px-3 py-1 rounded-xl shadow-duo-lime">Spark</span>
+    </div>
+    <p id="loading-status-msg" class="font-bold text-purple-200 mb-8 tracking-wide text-xs sm:text-sm uppercase">
+      Menghubungkan ke Cloud Google Sheets...
+    </p>
     
-    <div class="w-64 sm:w-80 bg-slate-100 h-5 rounded-full overflow-hidden border-2 border-slate-200 relative">
-      <div id="loading-bar" class="bg-brandLime h-full w-0 transition-all duration-300 rounded-full relative">
-        <div class="absolute top-0 left-0 w-full h-1 bg-white/50"></div>
+    <!-- Progress Bar 3D -->
+    <div class="w-64 sm:w-80 bg-brandPurpleDark h-6 rounded-2xl overflow-hidden border-2 border-indigo-950 p-1 shadow-inner">
+      <div id="loading-bar" class="bg-brandLime h-full w-0 transition-all duration-150 rounded-xl relative">
+        <div class="absolute top-0.5 left-2 right-2 h-1 bg-white/40 rounded-full"></div>
       </div>
     </div>
     
-    <p id="loading-text" class="mt-4 font-black text-slate-400 text-xl tracking-tighter">0%</p>
+    <!-- Angka Persentase 1% - 100% -->
+    <p id="loading-text" class="mt-4 font-black text-brandLime text-3xl tracking-tight">1%</p>
   </div>
-  <!-- =============================================================== -->
 
-  <!-- Top Header Bar -->
-  <header class="sticky top-0 z-40 bg-white border-b-2 border-slate-200 px-4 py-3 shadow-sm">
+  <!-- Top Gamified Duolingo Header Bar -->
+  <header class="sticky top-0 z-40 bg-white border-b-2 border-slate-200 px-4 lg:px-8 py-3">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
       
+      <!-- Brand Logo & Mascot -->
       <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('board')">
-        <div class="w-10 h-10 rounded-2xl bg-brandPurple flex items-center justify-center text-brandLime font-black text-xl animate-mascot shadow-sm">
+        <div class="w-10 h-10 rounded-2xl bg-brandPurple flex items-center justify-center text-brandLime font-black text-xl shadow-duo-purple animate-mascot">
           👾
         </div>
         <div>
-          <span class="font-black text-xl tracking-tight text-brandPurple">Reztroid<span class="text-white bg-brandLime px-1.5 py-0.5 rounded-lg ml-0.5 text-sm uppercase">Spark</span></span>
-          <p class="text-[10px] font-bold text-slate-400 hidden sm:block uppercase tracking-wider">CLOUD SYNCED ☁️</p>
+          <div class="flex items-center gap-1.5">
+            <span class="font-black text-xl tracking-tight text-brandPurple">Reztroid<span class="text-darkText bg-brandLime px-1.5 py-0.5 rounded-lg ml-0.5 text-sm uppercase">Spark</span></span>
+          </div>
+          <p class="text-[11px] font-bold text-slate-400 hidden sm:block uppercase tracking-wider">Level 3 • Content Wizard</p>
         </div>
       </div>
 
-      <nav class="flex items-center gap-2">
-        <button id="nav-board" onclick="switchTab('board')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-white text-brandPurple border border-slate-200 shadow-sm">
-          <i data-lucide="sparkles" class="w-4 h-4"></i> Ideation
+      <!-- Navigation Tabs (Duolingo Pill Tabs) -->
+      <nav class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+        <button id="nav-board" onclick="switchTab('board')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-white text-brandPurple shadow-sm">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Ideation Path</span>
         </button>
         <button id="nav-feed" onclick="switchTab('feed')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all">
-          <i data-lucide="layout-grid" class="w-4 h-4"></i> Feed
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>
+          <span>Feed Designer</span>
+        </button>
+        <button id="nav-quests" onclick="switchTab('quests')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all">
+          <i data-lucide="target" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Quests</span>
+          <span id="badge-quest-count" class="w-2 h-2 rounded-full bg-red-500"></span>
         </button>
       </nav>
 
+      <!-- Stats Bar (Streak, XP & Gem counters) -->
       <div class="flex items-center gap-2 sm:gap-4">
-        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-brandPurpleLight text-brandPurple font-extrabold text-sm border-2 border-purple-100">
-          <span>⚡</span><span id="stat-xp">0</span> XP
+        
+        <!-- Streak Counter -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-50 border-2 border-orange-200 text-orange-600 font-extrabold text-sm" title="Streak Kontenmu!">
+          <span class="text-base">🔥</span>
+          <span id="stat-streak">7</span>
+          <span class="text-xs text-orange-400 hidden md:inline">Hari</span>
         </div>
+
+        <!-- Sparks / Energy -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-brandPurpleLight border-2 border-purple-200 text-brandPurple font-extrabold text-sm" title="Spark XP terkumpul">
+          <span class="text-base">⚡</span>
+          <span id="stat-xp">340</span>
+          <span class="text-xs text-brandPurple/60 hidden md:inline">XP</span>
+        </div>
+
+        <!-- Quick Action "+ Idea" Button -->
         <button onclick="openNewIdeaModal()" class="btn-duo-lime flex items-center gap-1.5 px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm">
-          <i data-lucide="plus-circle" class="w-4 h-4"></i><span class="hidden sm:inline">Tambah Ide</span>
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Tambah Ide</span>
         </button>
       </div>
 
     </div>
   </header>
 
+  <!-- XP Progress Milestone Subbar -->
+  <div class="bg-brandPurpleLight/50 border-b border-purple-100 px-4 py-2 text-xs">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2 flex-1">
+        <span class="font-bold text-brandPurple flex items-center gap-1">
+          <i data-lucide="award" class="w-4 h-4"></i> Diamond League
+        </span>
+        <div class="w-full max-w-xs bg-purple-200 h-2.5 rounded-full overflow-hidden">
+          <div id="league-progress" class="bg-brandPurple h-full rounded-full transition-all duration-500" style="width: 68%;"></div>
+        </div>
+        <span class="font-bold text-slate-500 text-[11px] hidden sm:inline">68/100 XP menuju Master Feed</span>
+      </div>
+      <div class="text-slate-600 font-semibold text-[11px] flex items-center gap-1.5">
+        <span id="cloud-indicator" class="w-2 h-2 rounded-full bg-brandLimeDark animate-pulse"></span>
+        <span id="cloud-status-text">Cloud Sync Aktif</span>
+      </div>
+    </div>
+  </div>
+
   <!-- MAIN CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
-    <!-- TAB 1: IDEATION PATH -->
-    <div id="tab-board" class="space-y-6">
+    <!-- ==================== TAB 1: IDEATION PATH / QUEST TREE ==================== -->
+    <div id="tab-board" class="space-y-8">
       
-      <!-- Banner Utama -->
-      <div class="bg-brandPurple text-white rounded-[2rem] p-6 sm:p-8 relative overflow-hidden shadow-sm">
-        <h1 class="text-2xl sm:text-3xl font-black tracking-tight mb-2">
-          Waktunya Eksekusi Konten Reztroid!
-        </h1>
-        <p class="text-purple-100 font-medium text-sm mb-6">
-          Tarik (Drag) kartu ide untuk memindahkan stage. Tersimpan otomatis di Google Sheets.
-        </p>
+      <!-- Mascot Greeting Banner -->
+      <div class="bg-gradient-to-r from-brandPurple to-indigo-700 text-white rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-duo-purple">
+        <div class="relative z-10 max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-brandLime text-xs font-black uppercase tracking-wider mb-3">
+            🎯 Leveling Your Content Habit
+          </div>
+          <h1 class="text-2xl sm:text-4xl font-black tracking-tight mb-2">
+            Waktunya Eksekusi Ide Segar!
+          </h1>
+          <p class="text-purple-100 font-medium text-sm sm:text-base mb-6 leading-relaxed">
+            Pindahkan ide dari percikan awal hingga siap masuk jadwal feed Instagram & TikTok. Otomatis tersinkronisasi ke Google Sheets!
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <button onclick="generateRandomPrompt()" class="btn-duo-lime px-4 py-2.5 rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2">
+              <i data-lucide="dice-5" class="w-4 h-4"></i> Putar Dadu Ide Kilat
+            </button>
+            <button onclick="openNewIdeaModal()" class="btn-duo-white px-4 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center gap-2 bg-white text-darkText">
+              <i data-lucide="feather" class="w-4 h-4"></i> Buat Catatan Ide Baru
+            </button>
+          </div>
+        </div>
+        
+        <!-- Big Mascot Illustration in Banner -->
+        <div class="absolute -right-6 -bottom-8 opacity-90 hidden md:block select-none pointer-events-none">
+          <div class="text-9xl transform -rotate-12 animate-mascot">💡</div>
+        </div>
+      </div>
+
+      <!-- Quick Idea Spark Prompt Bar -->
+      <div id="prompt-card" class="hidden duo-card p-5 bg-amber-50 border-amber-300">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-amber-400 flex items-center justify-center text-2xl shadow-duo-amber">
+              ⚡
+            </div>
+            <div>
+              <span class="text-xs font-black uppercase tracking-wider text-amber-700" id="prompt-tag">Hook Ide Viral</span>
+              <p class="font-extrabold text-slate-800 text-base" id="prompt-text">"3 Kesalahan fatal pemula saat membuat feed yang bikin sepi interaksi..."</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <button onclick="adoptPromptToIdea()" class="btn-duo-purple px-4 py-2 rounded-xl font-bold text-xs flex-1 sm:flex-none flex items-center justify-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i> Pakai Ide Ini (+20 XP)
+            </button>
+            <button onclick="dismissPrompt()" class="btn-duo-white px-3 py-2 rounded-xl text-xs font-bold text-slate-400">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Duolingo Path / Kanban Workflow Columns -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+        <!-- Stage 1: Spark Idea -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-3 py-2 bg-white rounded-2xl border-2 border-slate-200">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-purple-100 text-brandPurple flex items-center justify-center font-black text-xs">
+                1
+              </div>
+              <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700">Spark Ide</h2>
+            </div>
+            <span id="count-col-spark" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+          </div>
+
+          <div id="col-spark" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'spark')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+            <!-- Dynamic Idea Cards will be inserted here -->
+          </div>
+        </div>
+
+        <!-- Stage 2: Drafting Script & Hook -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-3 py-2 bg-white rounded-2xl border-2 border-slate-200">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs">
+                2
+              </div>
+              <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700">Draft Hook/Script</h2>
+            </div>
+            <span id="count-col-draft" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+          </div>
+
+          <div id="col-draft" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'draft')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+            <!-- Dynamic Idea Cards -->
+          </div>
+        </div>
+
+        <!-- Stage 3: Visual & Feed Layout -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-3 py-2 bg-white rounded-2xl border-2 border-slate-200">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xs">
+                3
+              </div>
+              <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700">Visual & Feed</h2>
+            </div>
+            <span id="count-col-visual" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+          </div>
+
+          <div id="col-visual" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'visual')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+            <!-- Dynamic Idea Cards -->
+          </div>
+        </div>
+
+        <!-- Stage 4: Ready to Post -->
+        <div class="flex flex-col gap-3">
+          <div class="flex items-center justify-between px-3 py-2 bg-white rounded-2xl border-2 border-slate-200">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center font-black text-xs">
+                4
+              </div>
+              <h2 class="font-extrabold text-xs uppercase tracking-wider text-slate-700">Siap Tayang</h2>
+            </div>
+            <span id="count-col-ready" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+          </div>
+
+          <div id="col-ready" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'ready')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+            <!-- Dynamic Idea Cards -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==================== TAB 2: INTERACTIVE FEED DESIGNER ==================== -->
+    <div id="tab-feed" class="hidden space-y-6">
+      
+      <!-- Header row for Feed Designer -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border-2 border-slate-200">
         <div>
-          <button onclick="generateRandomPrompt()" class="btn-duo-lime px-4 py-2.5 rounded-2xl font-black text-xs flex items-center gap-2">
-            <i data-lucide="dice-5" class="w-4 h-4"></i> Prompt Reztroid
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg bg-brandPurpleLight text-brandPurple font-black text-xs uppercase tracking-wide">3x3 Grid Studio</span>
+            <span class="text-xs font-bold text-slate-400">• Instagram Profile Mockup</span>
+          </div>
+          <h2 class="text-2xl font-black tracking-tight mt-1">Simulator Feed & Estetika Visual</h2>
+          <p class="text-xs text-slate-500 font-medium">Klik atau geser (drag & drop) pada slot manapun untuk merancang cover, headline, warna palet, atau assign dari bank ide!</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetFeedToDemo()" class="btn-duo-white px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Grid
+          </button>
+          <button onclick="exportFeedPNG()" class="btn-duo-lime px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 text-darkText">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Ekspor PNG
+          </button>
+          <button onclick="triggerFeedConfetti()" class="btn-duo-purple px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Simpan Feed (+30 XP)
           </button>
         </div>
       </div>
 
-      <!-- Quick Prompt Card -->
-      <div id="prompt-card" class="hidden duo-card p-4 bg-amber-50 border-amber-300">
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-amber-400 flex items-center justify-center text-xl">⚡</div>
-            <div>
-              <span class="text-[10px] font-black uppercase text-amber-700" id="prompt-tag">Hook</span>
-              <p class="font-extrabold text-slate-800 text-sm" id="prompt-text">...</p>
-            </div>
-          </div>
-          <button onclick="adoptPromptToIdea()" class="btn-duo-purple px-4 py-2 rounded-xl font-bold text-xs shrink-0">Pakai (+20 XP)</button>
-        </div>
-      </div>
-
-      <!-- Kanban Columns -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="flex flex-col gap-3">
-          <h2 class="font-extrabold text-xs uppercase tracking-wider bg-white border-2 border-slate-200 p-2.5 rounded-xl text-center text-darkText shadow-sm">1. SPARK IDE</h2>
-          <div id="col-spark" data-stage="spark" class="kanban-col flex flex-col gap-3 min-h-[400px] p-1.5 bg-transparent rounded-xl border-2 border-dashed border-slate-300"></div>
-        </div>
-        
-        <div class="flex flex-col gap-3">
-          <h2 class="font-extrabold text-xs uppercase tracking-wider bg-white border-2 border-slate-200 p-2.5 rounded-xl text-center text-darkText shadow-sm">2. DRAFT/HOOK</h2>
-          <div id="col-draft" data-stage="draft" class="kanban-col flex flex-col gap-3 min-h-[400px] p-1.5 bg-transparent rounded-xl border-2 border-dashed border-slate-300"></div>
-        </div>
-        
-        <div class="flex flex-col gap-3">
-          <h2 class="font-extrabold text-xs uppercase tracking-wider bg-white border-2 border-slate-200 p-2.5 rounded-xl text-center text-darkText shadow-sm">3. VISUAL DESIGN</h2>
-          <div id="col-visual" data-stage="visual" class="kanban-col flex flex-col gap-3 min-h-[400px] p-1.5 bg-transparent rounded-xl border-2 border-dashed border-slate-300"></div>
-        </div>
-        
-        <div class="flex flex-col gap-3">
-          <h2 class="font-extrabold text-xs uppercase tracking-wider bg-emerald-50 border-2 border-emerald-200 p-2.5 rounded-xl text-center text-emerald-700 shadow-sm">4. SIAP TAYANG</h2>
-          <div id="col-ready" data-stage="ready" class="kanban-col flex flex-col gap-3 min-h-[400px] p-1.5 bg-transparent rounded-xl border-2 border-dashed border-emerald-200"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB 2: INTERACTIVE FEED DESIGNER -->
-    <div id="tab-feed" class="hidden space-y-6">
-      <div class="flex justify-between items-center bg-white p-5 rounded-3xl border-2 border-slate-200 shadow-sm">
-        <h2 class="text-2xl font-black">Feed Designer 3x3</h2>
-        <button onclick="exportFeedPNG()" class="btn-duo-purple px-4 py-2 rounded-xl text-xs font-black flex gap-2 items-center">
-          <i data-lucide="download" class="w-4 h-4"></i> Ekspor PNG
-        </button>
-      </div>
-
+      <!-- Feed Designer Main Interactive Area -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <!-- Mockup Feed -->
+        
+        <!-- Left Column: Instagram Phone Frame Preview -->
         <div class="lg:col-span-7 flex justify-center">
-          <div id="phone-mockup" class="w-full max-w-md bg-white rounded-[2.5rem] border-4 border-slate-800 p-5 shadow-xl relative">
-            <div class="w-32 h-4 bg-slate-800 rounded-full mx-auto mb-4"></div>
+          <div id="phone-mockup" class="w-full max-w-md bg-white rounded-[2.5rem] border-4 border-slate-800 shadow-2xl p-4 sm:p-5 relative transition-colors">
             
-            <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100">
-              <div class="w-14 h-14 rounded-full bg-slate-200 flex items-center justify-center font-black text-xl">🚀</div>
-              <div class="flex-1">
-                <h3 class="font-extrabold text-sm">reztroidverse <i data-lucide="badge-check" class="w-4 h-4 inline text-brandPurple fill-brandPurpleLight"></i></h3>
-                <p class="text-xs text-slate-500">Digital Store & Apps</p>
+            <!-- Phone Notch / Camera -->
+            <div class="w-32 h-4 bg-slate-800 rounded-full mx-auto mb-4"></div>
+
+            <!-- Profile Info Mockup -->
+            <div class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-100 px-2">
+              <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 via-pink-500 to-brandPurple">
+                <div class="w-full h-full rounded-full bg-white flex items-center justify-center font-black text-brandPurple text-xl">
+                  🚀
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1">
+                  <h3 class="font-extrabold text-sm text-darkText truncate">reztroidverse</h3>
+                  <i data-lucide="badge-check" class="w-4 h-4 text-brandPurple fill-brandPurpleLight"></i>
+                </div>
+                <p class="text-xs text-slate-500 truncate font-medium">Reztroid • Digital Store & Apps</p>
+                <div class="flex gap-4 text-xs font-bold text-slate-700 mt-1">
+                  <span><b class="text-darkText">9</b> posts</span>
+                  <span><b class="text-darkText">14.2k</b> followers</span>
+                </div>
               </div>
             </div>
 
-            <div id="feed-grid" class="grid grid-cols-3 gap-1.5 bg-slate-100 p-1.5 rounded-xl aspect-square"></div>
+            <!-- 3x3 Feed Grid -->
+            <div id="feed-grid" class="grid grid-cols-3 gap-1.5 aspect-square bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+              <!-- 9 Tiles will be generated here -->
+            </div>
+
+            <!-- Phone bottom bar -->
+            <div class="flex items-center justify-around pt-4 mt-2 text-slate-400">
+              <i data-lucide="home" class="w-5 h-5 text-darkText"></i>
+              <i data-lucide="search" class="w-5 h-5"></i>
+              <i data-lucide="plus-square" class="w-5 h-5"></i>
+              <i data-lucide="film" class="w-5 h-5"></i>
+              <div class="w-6 h-6 rounded-full bg-brandPurple text-white text-[10px] flex items-center justify-center font-bold">R</div>
+            </div>
+
           </div>
         </div>
 
-        <!-- Customizer -->
-        <div class="lg:col-span-5 duo-card p-5 bg-white space-y-4">
-          <h3 class="font-extrabold text-sm text-darkText border-b pb-2 border-slate-100">Edit Tile Feed</h3>
-          
-          <div>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Headline</label>
-            <input type="text" id="inspector-title" oninput="updateActiveTile()" placeholder="Headline Content" class="w-full px-3 py-2 text-sm font-bold border-2 border-slate-200 rounded-xl outline-none focus:border-brandPurple">
+        <!-- Right Column: Tile Inspector & Customizer Form -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="duo-card p-5 bg-white space-y-4">
+            
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span id="inspector-slot-badge" class="px-2 py-0.5 rounded-lg bg-brandPurple text-white font-black text-xs">
+                  Slot #1
+                </span>
+                <h3 class="font-extrabold text-sm text-darkText">Edit Desain Feed Tile</h3>
+              </div>
+              <span class="text-xs text-slate-400 font-semibold">Live Preview</span>
+            </div>
+
+            <!-- Tile Type -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-600 mb-1.5 uppercase">Tipe Konten</label>
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button" onclick="setTileType('carousel')" id="type-btn-carousel" class="py-2 text-xs font-bold rounded-xl border-2 border-brandPurple bg-brandPurpleLight text-brandPurple flex items-center justify-center gap-1">
+                  <i data-lucide="layers" class="w-3.5 h-3.5"></i> Carousel
+                </button>
+                <button type="button" onclick="setTileType('single')" id="type-btn-single" class="py-2 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600 flex items-center justify-center gap-1">
+                  <i data-lucide="image" class="w-3.5 h-3.5"></i> Single Post
+                </button>
+                <button type="button" onclick="setTileType('reel')" id="type-btn-reel" class="py-2 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600 flex items-center justify-center gap-1">
+                  <i data-lucide="video" class="w-3.5 h-3.5"></i> Reel Cover
+                </button>
+              </div>
+            </div>
+
+            <!-- Headline Text -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-600 mb-1.5 uppercase">Headline Visual / Hook Cover</label>
+              <input type="text" id="inspector-title" oninput="updateActiveTile()" placeholder="Contoh: 5 Tool AI Wajib Creator 2024" class="w-full px-3 py-2 text-sm font-bold rounded-xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none transition-colors">
+            </div>
+
+            <!-- Subtitle / Hook -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-600 mb-1.5 uppercase">Sub-teks / Tag</label>
+              <input type="text" id="inspector-sub" oninput="updateActiveTile()" placeholder="Swipe ke kiri 👉" class="w-full px-3 py-2 text-xs font-semibold rounded-xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none transition-colors">
+            </div>
+
+            <!-- Color Palette Presets -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-600 mb-1.5 uppercase">Pilihan Warna Tema Tile</label>
+              <div class="grid grid-cols-5 gap-2">
+                <button type="button" onclick="setTileColor('bg-brandPurple text-white')" class="h-9 rounded-xl bg-brandPurple border-2 border-brandPurpleDark shadow-sm flex items-center justify-center text-xs text-white">💜</button>
+                <button type="button" onclick="setTileColor('bg-brandLime text-darkText')" class="h-9 rounded-xl bg-brandLime border-2 border-brandLimeDark shadow-sm flex items-center justify-center text-xs">⚡</button>
+                <button type="button" onclick="setTileColor('bg-slate-900 text-white')" class="h-9 rounded-xl bg-slate-900 border-2 border-black shadow-sm flex items-center justify-center text-xs text-white">🖤</button>
+                <button type="button" onclick="setTileColor('bg-gradient-to-tr from-pink-500 to-purple-600 text-white')" class="h-9 rounded-xl bg-gradient-to-tr from-pink-500 to-purple-600 border-2 border-purple-700 shadow-sm flex items-center justify-center text-xs text-white">🎨</button>
+                <button type="button" onclick="setTileColor('bg-white text-darkText border border-slate-300')" class="h-9 rounded-xl bg-white border-2 border-slate-300 shadow-sm flex items-center justify-center text-xs text-darkText">🤍</button>
+              </div>
+            </div>
+
+            <!-- Assign Idea to Slot -->
+            <div>
+              <label class="block text-xs font-extrabold text-slate-600 mb-1.5 uppercase">Tautkan Dari Ideation Board</label>
+              <select id="inspector-sync-idea" onchange="syncSelectedIdeaToSlot()" class="w-full px-3 py-2 text-xs font-bold rounded-xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none bg-white">
+                <option value="">-- Pilih ide yang sudah dibuat --</option>
+              </select>
+            </div>
+
+            <!-- Quick Apply Button -->
+            <div class="pt-2">
+              <button onclick="saveActiveTile()" class="btn-duo-purple w-full py-2.5 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Simpan Posisi Slot Ini
+              </button>
+            </div>
+
           </div>
-          
-          <div>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Subtext</label>
-            <input type="text" id="inspector-sub" oninput="updateActiveTile()" placeholder="Sub-text" class="w-full px-3 py-2 text-xs font-semibold border-2 border-slate-200 rounded-xl outline-none focus:border-brandPurple">
-          </div>
-          
-          <div>
-            <label class="text-[10px] font-bold uppercase text-slate-500 mb-1 block">Warna</label>
-            <div class="grid grid-cols-4 gap-2">
-              <button onclick="setTileColor('bg-brandPurple text-white')" class="h-8 rounded-lg bg-brandPurple border-2 border-brandPurpleDark"></button>
-              <button onclick="setTileColor('bg-brandLime text-darkText')" class="h-8 rounded-lg bg-brandLime border-2 border-brandLimeDark"></button>
-              <button onclick="setTileColor('bg-slate-900 text-white')" class="h-8 rounded-lg bg-slate-900 border-2 border-black"></button>
-              <button onclick="setTileColor('bg-white text-darkText border-2 border-slate-300')" class="h-8 rounded-lg bg-white border-2 border-slate-300"></button>
+
+          <!-- Feed Aesthetic Tips Card -->
+          <div class="p-4 rounded-2xl bg-brandPurpleLight border-2 border-purple-200">
+            <div class="flex items-start gap-3">
+              <div class="text-2xl">💡</div>
+              <div class="text-xs">
+                <h4 class="font-black text-brandPurple uppercase tracking-wide">Tips Pola Feed Estetik</h4>
+                <p class="text-slate-600 mt-0.5 font-medium leading-relaxed">
+                  Gunakan pola papan catur (selang-seling antara warna ungu dan putih) atau pola vertikal per kolom untuk navigasi audiens yang rapi!
+                </p>
+              </div>
             </div>
           </div>
-          
-          <button onclick="saveActiveTile()" class="btn-duo-purple w-full py-2.5 rounded-2xl text-xs font-black mt-2">SIMPAN SLOT</button>
+
         </div>
+
       </div>
+
     </div>
+
+    <!-- ==================== TAB 3: DAILY QUESTS & XP LEADERBOARD ==================== -->
+    <div id="tab-quests" class="hidden space-y-6">
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Left: Quest Checklist -->
+        <div class="md:col-span-2 space-y-4">
+          <div class="duo-card p-6 bg-white space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center font-black text-xl shadow-duo-amber">
+                  🎯
+                </div>
+                <div>
+                  <h2 class="text-lg font-black tracking-tight">Tantangan Harian Kreator</h2>
+                  <p class="text-xs text-slate-500 font-medium">Reset tiap 24 jam. Klaim XP untuk membuka badge baru!</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                Reset: 08:42:19
+              </span>
+            </div>
+
+            <!-- List of Quests -->
+            <div id="quest-list" class="space-y-3">
+              <!-- Dynamically generated quests -->
+            </div>
+          </div>
+
+          <!-- Milestones & Badges -->
+          <div class="duo-card p-6 bg-white">
+            <h3 class="font-extrabold text-sm uppercase tracking-wider text-slate-600 mb-4 flex items-center gap-2">
+              <i data-lucide="shield" class="w-4 h-4 text-brandPurple"></i> Koleksi Lencana Prestasi
+            </h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+              
+              <div class="p-3 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center">
+                <div class="text-3xl mb-1">🔥</div>
+                <h4 class="font-black text-xs text-darkText">Streak Master</h4>
+                <p class="text-[10px] text-slate-500 font-medium">Capai 7 hari streak</p>
+                <span class="mt-2 text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">TERBUKA</span>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center">
+                <div class="text-3xl mb-1">🚀</div>
+                <h4 class="font-black text-xs text-darkText">Idea Machine</h4>
+                <p class="text-[10px] text-slate-500 font-medium">Buat 10 ide konten</p>
+                <span class="mt-2 text-[10px] font-black text-brandPurple bg-purple-100 px-2 py-0.5 rounded-full">PROGRES (8/10)</span>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-slate-50 border-2 border-slate-200 flex flex-col items-center">
+                <div class="text-3xl mb-1">🎨</div>
+                <h4 class="font-black text-xs text-darkText">Grid Architect</h4>
+                <p class="text-[10px] text-slate-500 font-medium">Lengkapi 9 tile feed</p>
+                <span class="mt-2 text-[10px] font-black text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">TERBUKA</span>
+              </div>
+
+              <div class="p-3 rounded-2xl bg-slate-50 border-2 border-slate-200 opacity-60 flex flex-col items-center">
+                <div class="text-3xl mb-1">👑</div>
+                <h4 class="font-black text-xs text-darkText">Viral Prodigy</h4>
+                <p class="text-[10px] text-slate-500 font-medium">Kumpulkan 1,000 XP</p>
+                <span class="mt-2 text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">TERKUNCI</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Duolingo League Leaderboard Mockup -->
+        <div class="duo-card p-6 bg-white space-y-4">
+          <div class="flex items-center gap-2 pb-3 border-b border-slate-100">
+            <span class="text-2xl">🏆</span>
+            <div>
+              <h3 class="font-extrabold text-sm text-darkText">Liga Ruby Kreator</h3>
+              <p class="text-xs text-slate-400 font-medium">Top 3 naik kasta ke Diamond</p>
+            </div>
+          </div>
+
+          <!-- Leaderboard List -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 font-bold text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-5 text-amber-600 font-black">#1</span>
+                <span>👑 Sarah Visuals</span>
+              </div>
+              <span class="text-amber-700 font-black">640 XP</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-100 font-bold text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-5 text-slate-500 font-black">#2</span>
+                <span>⚡ Budi Storyteller</span>
+              </div>
+              <span class="text-slate-700 font-black">510 XP</span>
+            </div>
+
+            <!-- Current User -->
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-brandPurpleLight border-2 border-brandPurple font-bold text-xs text-brandPurple">
+              <div class="flex items-center gap-2">
+                <span class="w-5 font-black">#3</span>
+                <span>👾 Kamu (Reztroid)</span>
+              </div>
+              <span class="font-black" id="lb-user-xp">340 XP</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 font-bold text-xs text-slate-600">
+              <div class="flex items-center gap-2">
+                <span class="w-5 text-slate-400 font-black">#4</span>
+                <span>Dian Copywriting</span>
+              </div>
+              <span>290 XP</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 font-bold text-xs text-slate-600">
+              <div class="flex items-center gap-2">
+                <span class="w-5 text-slate-400 font-black">#5</span>
+                <span>Rian TechReview</span>
+              </div>
+              <span>210 XP</span>
+            </div>
+          </div>
+
+          <div class="pt-2 text-center">
+            <p class="text-[11px] font-bold text-slate-400">Pertahankan posisimu dalam 2 hari ke depan!</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
   </main>
 
-  <!-- MODAL NEW IDEA -->
-  <div id="modal-idea" class="fixed inset-0 z-50 bg-slate-900/60 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 w-full max-w-lg space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-        <h3 class="font-black text-lg">Tambah Ide Baru</h3>
-        <button onclick="closeNewIdeaModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex justify-center items-center"><i data-lucide="x" class="w-4 h-4"></i></button>
+  <!-- ==================== MODAL: ADD / EDIT IDEA ==================== -->
+  <div id="modal-idea" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="modal-content bg-white rounded-3xl border-4 border-slate-800 shadow-2xl max-w-lg w-full p-6 space-y-4 transform transition-all">
+      
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-brandPurple text-brandLime flex items-center justify-center font-black">
+            💡
+          </div>
+          <h3 class="font-black text-lg text-darkText" id="modal-title">Tambah Ide Konten Baru</h3>
+        </div>
+        <button onclick="closeNewIdeaModal()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
-      <input type="text" id="idea-title" placeholder="Judul / Hook..." class="w-full px-4 py-2.5 border-2 rounded-xl font-bold outline-none focus:border-brandPurple text-sm">
-      <textarea id="idea-notes" rows="3" placeholder="Catatan/Script" class="w-full px-4 py-2 border-2 rounded-xl text-xs font-medium outline-none focus:border-brandPurple resize-none"></textarea>
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="handleIdeaSubmit()" class="btn-duo-purple px-5 py-2.5 rounded-xl text-xs font-black w-full text-center">Simpan Ide</button>
+
+      <form id="form-idea" onsubmit="handleIdeaSubmit(event)" class="space-y-4">
+        <input type="hidden" id="idea-id" value="">
+
+        <!-- Title / Hook -->
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-600 mb-1">Judul / Hook Utama</label>
+          <input type="text" id="idea-title" required placeholder="Contoh: 3 Alasan Kenapa Desainmu Belum Menjual" class="w-full px-4 py-2.5 text-sm font-bold rounded-2xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none">
+        </div>
+
+        <!-- Format & Platform Grid -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-600 mb-1">Format Konten</label>
+            <select id="idea-format" class="w-full px-3 py-2.5 text-xs font-bold rounded-2xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none bg-white">
+              <option value="Carousel">📚 Carousel Slide</option>
+              <option value="Reel / Short">🎬 Reels / Shorts</option>
+              <option value="Single Image">🖼️ Single Post</option>
+              <option value="Story Series">⏳ Story Interactive</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-slate-600 mb-1">Platform Utama</label>
+            <select id="idea-platform" class="w-full px-3 py-2.5 text-xs font-bold rounded-2xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none bg-white">
+              <option value="Instagram">Instagram</option>
+              <option value="TikTok">TikTok</option>
+              <option value="LinkedIn">LinkedIn</option>
+              <option value="Twitter / X">Twitter / X</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Jadwal Tayang (Content Calendar) -->
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-600 mb-1">Jadwal Tayang (Opsional)</label>
+          <input type="date" id="idea-date" class="w-full px-4 py-2.5 text-sm font-bold rounded-2xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none bg-white" />
+        </div>
+
+        <!-- Notes / Angle / Script outline -->
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-600 mb-1">Outline / Script Poin Kunci</label>
+          <textarea id="idea-notes" rows="3" placeholder="Poin 1: Masalah umum pemula&#10;Poin 2: Solusi cepat 1 menit&#10;Call to Action: Simpan post ini!" class="w-full px-4 py-2 text-xs font-medium rounded-2xl border-2 border-slate-200 focus:border-brandPurple focus:outline-none resize-none"></textarea>
+        </div>
+
+        <!-- Category Tag Selection -->
+        <div>
+          <label class="block text-xs font-black uppercase text-slate-600 mb-1.5">Pilar Konten (Tag)</label>
+          <div class="flex flex-wrap gap-2" id="tag-selector-group">
+            <button type="button" onclick="selectTag('Edukasi')" class="tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-brandPurple bg-brandPurpleLight text-brandPurple">Edukasi</button>
+            <button type="button" onclick="selectTag('Inspirasi')" class="tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600">Inspirasi</button>
+            <button type="button" onclick="selectTag('Tips Cepat')" class="tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600">Tips Cepat</button>
+            <button type="button" onclick="selectTag('Promosi')" class="tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600">Promosi</button>
+            <button type="button" onclick="selectTag('Behind The Scene')" class="tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600">BTS</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeNewIdeaModal()" class="btn-duo-white px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-500">
+            Batal
+          </button>
+          <button type="submit" class="btn-duo-purple px-6 py-2.5 rounded-2xl text-xs font-black flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i> Simpan Ide (+15 XP)
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-brandLime">
+      <span id="toast-icon" class="text-xl">⚡</span>
+      <div>
+        <p id="toast-title" class="font-black text-xs text-brandLime uppercase tracking-wider">Berhasil!</p>
+        <p id="toast-msg" class="text-xs font-medium text-slate-200">Ide baru berhasil disimpan.</p>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all px-5 py-3 rounded-2xl bg-slate-900 text-white shadow-2xl border-2 border-brandLime flex items-center gap-2">
-    <span>✨</span>
-    <p id="toast-msg" class="text-xs font-medium"></p>
-  </div>
-
+  <!-- JAVASCRIPT LOGIC & STATE ENGINE -->
   <script>
+    // --- GOOGLE SHEETS API URL ---
     const API_URL = "https://script.google.com/macros/s/AKfycbwb3_V6j3H_n4LhbQ2N-Mpxmat_VhY7mfJXuasrWjPK5W6NCcOX_3VNPTsB2FTSOFHl3g/exec";
+    const STORAGE_KEY = 'reztroidSparkData_v2';
 
-    let userState = { xp: 120, streak: 7 };
-    let ideas = [];
-    let feedGrid = [];
-    let activeTileIndex = 0;
+    // --- WEB AUDIO API FOR TACTILE SOUNDS ---
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
 
-    const reztroidPrompts = [
-      { tag: 'Promo', text: 'Cara hemat 50% langganan Netflix.' },
-      { tag: 'Edukasi', text: 'Solusi sinyal hilang iPhone ex-inter (Unlock IMEI).' },
-      { tag: 'Tools', text: '3 Aplikasi desain yang wajib di HP kamu.' }
-    ];
+    function playSound(type) {
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
 
-    window.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      startLoadingScreen();
-    });
-
-    // LOADING SCREEN
-    function startLoadingScreen() {
-      let loadProgress = 0;
-      const loadingBar = document.getElementById('loading-bar');
-      const loadingText = document.getElementById('loading-text');
-      const loadingScreen = document.getElementById('loading-screen');
-
-      let loadInterval = setInterval(() => {
-        if (loadProgress < 85) {
-          loadProgress += Math.floor(Math.random() * 15) + 1;
-          if (loadProgress > 85) loadProgress = 85;
-          loadingBar.style.width = loadProgress + '%';
-          loadingText.innerText = loadProgress + '%';
+        if (type === 'pop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(450, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        } else if (type === 'coin') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(987.77, now);
+          osc.frequency.setValueAtTime(1318.51, now + 0.08);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } else if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          osc.frequency.setValueAtTime(1046.50, now + 0.24);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
+          osc.start(now);
+          osc.stop(now + 0.45);
         }
-      }, 100);
-
-      initAppFromCloud(loadInterval, loadingBar, loadingText, loadingScreen);
+      } catch (e) {}
     }
 
-    async function initAppFromCloud(loadInterval, loadingBar, loadingText, loadingScreen) {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        
-        if(data.userState && Object.keys(data.userState).length > 0) userState = data.userState;
-        if(data.ideas && data.ideas.length > 0) ideas = data.ideas;
-        if(data.feedGrid && data.feedGrid.length > 0) feedGrid = data.feedGrid;
-        else {
-          for(let i=0; i<9; i++) feedGrid.push({ id: i, title: `Slot #${i+1}`, sub: 'Draft', type: 'single', color: 'bg-white text-darkText border-2 border-slate-300' });
-        }
-        
-        document.getElementById('stat-xp').innerText = userState.xp;
-        renderColumns();
-        renderFeedGrid();
-        initDragAndDrop();
-        finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, "Tersinkronisasi!");
-      } catch(err) {
-        console.error("Gagal load API:", err);
-        finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, "Offline Mode");
+    // --- APPLICATION STATE ---
+    let userState = {
+      xp: 340,
+      streak: 7,
+      selectedTag: 'Edukasi',
+      activeTileIndex: 0
+    };
+
+    let ideas = [
+      {
+        id: 'idea-1',
+        title: 'Promo Langganan Premium',
+        stage: 'spark',
+        format: 'Reel / Short',
+        platform: 'Instagram',
+        tag: 'Promosi',
+        date: '2026-11-10',
+        notes: 'Hook: Beli premium tapi harga mahasiswa? Mention diskon 50% di Reztroid.'
+      },
+      {
+        id: 'idea-2',
+        title: 'Tutorial Unlock IMEI',
+        stage: 'draft',
+        format: 'Carousel',
+        platform: 'Instagram',
+        tag: 'Tips Cepat',
+        date: '2026-11-12',
+        notes: 'Slide 1: HP ke-block? Slide 2-4: Langkah unlock. Slide 5: Jasa Reztroid.'
+      },
+      {
+        id: 'idea-3',
+        title: 'Tools Desain Wajib',
+        stage: 'visual',
+        format: 'Single Image',
+        platform: 'TikTok',
+        tag: 'Inspirasi',
+        date: '',
+        notes: 'List aplikasi yang bisa didownload via Reztroid.'
+      },
+      {
+        id: 'idea-4',
+        title: 'Q&A: Garansi Aplikasi',
+        stage: 'ready',
+        format: 'Story Series',
+        platform: 'Instagram',
+        tag: 'Behind The Scene',
+        date: '2026-11-06',
+        notes: 'Jawab keraguan user tentang life-time warranty di Reztroid.'
+      }
+    ];
+
+    let feedGrid = [
+      { id: 0, title: '3 Formula Hook Viral', sub: 'Swipe 👉', type: 'carousel', color: 'bg-brandPurple text-white', slides: 5 },
+      { id: 1, title: 'Warna Brand Aesthetic', sub: 'Palet #1', type: 'single', color: 'bg-brandLime text-darkText', slides: 1 },
+      { id: 2, title: 'Story Behind The Logo', sub: 'Reels', type: 'reel', color: 'bg-slate-900 text-white', slides: 1 },
+      { id: 3, title: 'Minimalist Workspace', sub: 'Single', type: 'single', color: 'bg-white text-darkText border border-slate-300', slides: 1 },
+      { id: 4, title: '5 AI Tools Konten 2024', sub: 'Save Post', type: 'carousel', color: 'bg-gradient-to-tr from-pink-500 to-purple-600 text-white', slides: 7 },
+      { id: 5, title: 'Cara Mengatasi Burnout', sub: 'Tips Hidup', type: 'single', color: 'bg-brandPurple text-white', slides: 1 },
+      { id: 6, title: 'Rahasia Typography Bagus', sub: 'Font Guide', type: 'carousel', color: 'bg-brandLime text-darkText', slides: 6 },
+      { id: 7, title: 'Workspace Tour 2.0', sub: 'Video', type: 'reel', color: 'bg-slate-900 text-white', slides: 1 },
+      { id: 8, title: 'Promo Course Kreator', sub: 'Daftar Sekarang', type: 'single', color: 'bg-brandPurple text-white', slides: 1 }
+    ];
+
+    let quests = [
+      { id: 'q1', text: 'Tambahkan 2 ide hook baru', progress: 1, target: 2, xp: 20, completed: false },
+      { id: 'q2', text: 'Rancang 1 layout Feed Carousel', progress: 1, target: 1, xp: 30, completed: true, claimed: true },
+      { id: 'q3', text: 'Pindahkan ide ke tahap Siap Tayang', progress: 1, target: 1, xp: 25, completed: true, claimed: false },
+      { id: 'q4', text: 'Putar Dadu Ide Kilat untuk inspirasi', progress: 0, target: 1, xp: 15, completed: false }
+    ];
+
+    const randomPrompts = [
+      { tag: 'Akun Streaming', text: 'Cara hemat 50% langganan Netflix/Spotify bulanan resmi tanpa ribet...' },
+      { tag: 'Jasa Unlock IMEI', text: 'HP ex-inter sinyal hilang? Ini solusi permanen yang jarang orang tahu.' },
+      { tag: 'Tools Desain', text: '5 Aplikasi Premium (Canva Pro, Adobe) yang wajib dimiliki desainer tahun ini.' },
+      { tag: 'Lisensi Digital', text: 'Bahaya pakai Windows/Office crack, dan cara dapat lisensi original murah!' },
+      { tag: 'Produk Reztroid', text: 'Review jujur beli akun premium di Reztroid: Aman, garansi, dan super cepat.' }
+    ];
+
+    // --- CLOUD & LOCAL STORAGE SYNC ---
+    function saveState() {
+      // 1. Simpan ke LocalStorage secara instan
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ userState, ideas, feedGrid, quests }));
+
+      // 2. Push ke Google Sheets di latar belakang (Optimistic UI)
+      const statusText = document.getElementById('cloud-status-text');
+      if (statusText) statusText.innerText = 'Menyimpan ke Cloud...';
+
+      fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ userState, ideas, feedGrid })
+      }).then(() => {
+        if (statusText) statusText.innerText = 'Tersimpan di Google Sheets ☁️';
+      }).catch((err) => {
+        console.error('Gagal sync ke Sheets:', err);
+        if (statusText) statusText.innerText = 'Tersimpan Lokal (Offline)';
+      });
+    }
+
+    function loadLocalBackup() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.userState) userState = { ...userState, ...parsed.userState };
+          if (parsed.ideas && parsed.ideas.length > 0) ideas = parsed.ideas;
+          if (parsed.feedGrid && parsed.feedGrid.length === 9) feedGrid = parsed.feedGrid;
+          if (parsed.quests) quests = parsed.quests;
+        } catch(e) { console.error('Gagal memuat state lokal', e); }
       }
     }
 
-    function finishLoading(loadInterval, loadingBar, loadingText, loadingScreen, successText) {
-      clearInterval(loadInterval);
-      loadingBar.style.width = '100%';
-      loadingText.innerText = '100%';
-      setTimeout(() => {
-        loadingText.innerText = successText;
-        setTimeout(() => {
-          loadingScreen.classList.add('opacity-0');
-          setTimeout(() => { loadingScreen.style.display = 'none'; }, 700);
-        }, 500);
-      }, 400);
-    }
+    // --- LOADING SCREEN (1% - 100%) & CLOUD FETCH ---
+    function startAppWithLoading() {
+      loadLocalBackup(); // Muat cadangan lokal dulu
 
-    function syncToCloud() {
-      const payload = { userState, ideas, feedGrid };
-      fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
-        .catch(err => console.error(err));
-    }
+      let progress = 1;
+      const bar = document.getElementById('loading-bar');
+      const text = document.getElementById('loading-text');
+      const screen = document.getElementById('loading-screen');
+      const statusMsg = document.getElementById('loading-status-msg');
+      let cloudResolved = false;
 
-    function switchTab(tabId) {
-      document.getElementById('tab-board').classList.add('hidden');
-      document.getElementById('tab-feed').classList.add('hidden');
-      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-    }
+      // Animasi kenaikan angka 1% sampai 100%
+      const timer = setInterval(() => {
+        if (progress < 88 && !cloudResolved) {
+          progress += Math.floor(Math.random() * 4) + 1;
+          if (progress > 88) progress = 88;
+        } else if (cloudResolved && progress < 100) {
+          progress += Math.floor(Math.random() * 6) + 3;
+          if (progress >= 100) progress = 100;
+        }
 
-    function renderColumns() {
-      ['spark', 'draft', 'visual', 'ready'].forEach(stage => {
-        const col = document.getElementById(`col-${stage}`);
-        col.innerHTML = '';
-        ideas.filter(i => i.stage === stage).forEach(idea => {
-          const card = document.createElement('div');
-          card.className = "duo-card p-3 cursor-grab bg-white text-xs hover:border-brandPurple transition-colors shadow-sm";
-          card.dataset.id = idea.id;
-          card.innerHTML = `<h4 class="font-bold text-darkText leading-snug">${idea.title}</h4>`;
-          if (idea.notes) card.innerHTML += `<p class="text-[10px] text-slate-500 mt-1 line-clamp-2">${idea.notes}</p>`;
-          col.appendChild(card);
-        });
-      });
-    }
+        bar.style.width = progress + '%';
+        text.innerText = progress + '%';
 
-    function initDragAndDrop() {
-      document.querySelectorAll('.kanban-col').forEach(col => {
-        new Sortable(col, {
-          group: 'kanban',
-          animation: 150,
-          ghostClass: 'drag-ghost',
-          onEnd: (evt) => {
-            const ideaId = evt.item.dataset.id;
-            const newStage = evt.to.dataset.stage;
-            const ideaIndex = ideas.findIndex(i => i.id == ideaId);
-            if (ideaIndex > -1) {
-              ideas[ideaIndex].stage = newStage;
-              if (newStage === 'ready') { userState.xp += 15; document.getElementById('stat-xp').innerText = userState.xp; showToast('🎉 Siap Tayang! +15 XP'); confetti({particleCount: 50, spread: 60}); }
-              syncToCloud(); 
-            }
+        if (progress >= 100) {
+          clearInterval(timer);
+          setTimeout(() => {
+            screen.classList.add('opacity-0');
+            setTimeout(() => { screen.style.display = 'none'; }, 700);
+          }, 250);
+        }
+      }, 35);
+
+      // Tarik data terbaru dari Google Sheets
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          let cloudHasData = false;
+
+          if (data.userState && Object.keys(data.userState).length > 0) {
+            userState = {
+              ...userState,
+              ...data.userState,
+              xp: Number(data.userState.xp ?? userState.xp),
+              streak: Number(data.userState.streak ?? userState.streak),
+              activeTileIndex: Number(data.userState.activeTileIndex ?? 0)
+            };
+            cloudHasData = true;
           }
+
+          if (data.ideas && Array.isArray(data.ideas) && data.ideas.length > 0) {
+            ideas = data.ideas.map(item => ({
+              id: String(item.id || 'idea-' + Date.now()),
+              title: item.title || 'Tanpa Judul',
+              stage: item.stage || 'spark',
+              format: item.format || 'Carousel',
+              platform: item.platform || 'Instagram',
+              tag: item.tag || 'Edukasi',
+              notes: item.notes || '',
+              date: item.date ? String(item.date).slice(0, 10) : ''
+            }));
+            cloudHasData = true;
+          }
+
+          if (data.feedGrid && Array.isArray(data.feedGrid) && data.feedGrid.length === 9) {
+            feedGrid = data.feedGrid.map((tile, idx) => ({
+              id: idx,
+              title: tile.title || `Konten #${idx + 1}`,
+              sub: tile.sub || 'Post',
+              type: tile.type || 'single',
+              color: tile.color || 'bg-brandPurple text-white',
+              slides: Number(tile.slides || 1)
+            }));
+            cloudHasData = true;
+          }
+
+          // Jika Google Sheets masih kosong melompong, langsung isi dengan data awal
+          if (!cloudHasData) {
+            saveState();
+          } else {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ userState, ideas, feedGrid, quests }));
+          }
+
+          statusMsg.innerText = 'Sinkronisasi Selesai! Membuka Reztroid Spark...';
+          refreshAllUI();
+          cloudResolved = true;
+        })
+        .catch(err => {
+          console.warn('Menggunakan data lokal:', err);
+          statusMsg.innerText = 'Mode Cepat Aktif! Membuka Reztroid Spark...';
+          refreshAllUI();
+          cloudResolved = true;
         });
+    }
+
+    function refreshAllUI() {
+      renderColumns();
+      renderFeedGrid();
+      renderQuests();
+      updateStatsUI();
+      populateSyncIdeaDropdown();
+      selectTile(userState.activeTileIndex || 0);
+      lucide.createIcons();
+    }
+
+    // --- INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshAllUI();
+      startAppWithLoading();
+    });
+
+    // --- TAB SWITCHER ---
+    function switchTab(tabId) {
+      playSound('pop');
+      ['board', 'feed', 'quests'].forEach(t => {
+        const tabEl = document.getElementById(`tab-${t}`);
+        const navEl = document.getElementById(`nav-${t}`);
+        if (t === tabId) {
+          tabEl.classList.remove('hidden');
+          navEl.classList.add('bg-white', 'text-brandPurple', 'shadow-sm');
+          navEl.classList.remove('text-slate-500');
+        } else {
+          tabEl.classList.add('hidden');
+          navEl.classList.remove('bg-white', 'text-brandPurple', 'shadow-sm');
+          navEl.classList.add('text-slate-500');
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // --- IDEATION PATH / KANBAN LOGIC ---
+    function renderColumns() {
+      const cols = {
+        spark: document.getElementById('col-spark'),
+        draft: document.getElementById('col-draft'),
+        visual: document.getElementById('col-visual'),
+        ready: document.getElementById('col-ready')
+      };
+
+      Object.values(cols).forEach(col => col.innerHTML = '');
+
+      const counts = { spark: 0, draft: 0, visual: 0, ready: 0 };
+
+      ideas.forEach(item => {
+        const stageKey = cols[item.stage] ? item.stage : 'spark';
+        counts[stageKey]++;
+        const card = document.createElement('div');
+        card.className = "duo-card p-3.5 space-y-2 cursor-pointer relative group animate-pop-in";
+        card.draggable = true;
+        card.ondragstart = (e) => dragIdeaStart(e, item.id);
+        card.ondragend = (e) => dragIdeaEnd(e);
+
+        let formatIcon = item.format === 'Carousel' ? 'layers' : (String(item.format).includes('Reel') ? 'video' : 'image');
+        let dateBadge = item.date ? `<span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 flex items-center gap-1 border-b-2 border-emerald-200 shadow-sm"><i data-lucide="calendar" class="w-3 h-3"></i> ${item.date}</span>` : '';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between text-[11px] font-bold">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="px-2 py-0.5 rounded-lg bg-brandPurpleLight text-brandPurple flex items-center gap-1 border-b-2 border-purple-200 shadow-sm">
+                <i data-lucide="${formatIcon}" class="w-3 h-3"></i> ${item.format}
+              </span>
+              ${dateBadge}
+            </div>
+            <span class="text-slate-400 font-semibold mt-1 sm:mt-0">${item.platform}</span>
+          </div>
+
+          <h4 class="font-black text-sm text-darkText leading-snug">${item.title}</h4>
+
+          ${item.notes ? `<p class="text-xs text-slate-500 font-medium line-clamp-2">${item.notes}</p>` : ''}
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">#${item.tag}</span>
+            <div class="flex items-center gap-1 opacity-90 group-hover:opacity-100">
+              ${getMoveButtons(item.id, stageKey)}
+              <button onclick="deleteIdea('${item.id}', event)" class="p-1 rounded-lg text-slate-300 hover:text-red-500 transition-colors" title="Hapus Ide">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        cols[stageKey].appendChild(card);
+      });
+
+      document.getElementById('count-col-spark').innerText = counts.spark;
+      document.getElementById('count-col-draft').innerText = counts.draft;
+      document.getElementById('count-col-visual').innerText = counts.visual;
+      document.getElementById('count-col-ready').innerText = counts.ready;
+
+      lucide.createIcons();
+    }
+
+    function getMoveButtons(id, currentStage) {
+      const stages = ['spark', 'draft', 'visual', 'ready'];
+      const curIdx = stages.indexOf(currentStage);
+
+      let buttons = '';
+      if (curIdx > 0) {
+        buttons += `
+          <button onclick="moveIdea('${id}', '${stages[curIdx - 1]}', event)" class="p-1 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" title="Mundur">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+      }
+      if (curIdx < stages.length - 1) {
+        buttons += `
+          <button onclick="moveIdea('${id}', '${stages[curIdx + 1]}', event)" class="p-1 rounded-lg bg-brandPurpleLight text-brandPurple hover:bg-brandPurple hover:text-white transition-colors" title="Lanjut">
+            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        `;
+      }
+      return buttons;
+    }
+
+    function moveIdea(id, newStage, event) {
+      if (event) event.stopPropagation();
+      const idea = ideas.find(i => String(i.id) === String(id));
+      if (idea) {
+        idea.stage = newStage;
+        playSound('pop');
+
+        if (newStage === 'ready') {
+          addXP(15);
+          showToast('⚡ Siap Tayang!', 'Ide berhasil dipindahkan ke tahap final! (+15 XP)');
+          triggerMiniConfetti();
+        }
+
+        renderColumns();
+        saveState();
+      }
+    }
+
+    function deleteIdea(id, event) {
+      if (event) event.stopPropagation();
+      ideas = ideas.filter(i => String(i.id) !== String(id));
+      playSound('pop');
+      renderColumns();
+      populateSyncIdeaDropdown();
+      showToast('🗑️ Dihapus', 'Ide telah dihapus dari papan.');
+      saveState();
+    }
+
+    // --- RANDOM PROMPT GENERATOR ---
+    function generateRandomPrompt() {
+      playSound('coin');
+      const card = document.getElementById('prompt-card');
+      const randomItem = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+      
+      document.getElementById('prompt-tag').innerText = randomItem.tag;
+      document.getElementById('prompt-text').innerText = `"${randomItem.text}"`;
+      
+      card.classList.remove('hidden');
+      card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const q = quests.find(item => item.id === 'q4');
+      if (q && !q.completed) {
+        q.progress = 1;
+        q.completed = true;
+        renderQuests();
+      }
+    }
+
+    function dismissPrompt() {
+      document.getElementById('prompt-card').classList.add('hidden');
+    }
+
+    function adoptPromptToIdea() {
+      const text = document.getElementById('prompt-text').innerText.replace(/"/g, '');
+      const tag = document.getElementById('prompt-tag').innerText;
+
+      ideas.unshift({
+        id: 'idea-' + Date.now(),
+        title: text,
+        stage: 'spark',
+        format: 'Carousel',
+        platform: 'Instagram',
+        tag: tag.includes('Hook') ? 'Tips Cepat' : 'Promosi',
+        date: '',
+        notes: 'Inspirasi kilat dari Dadu Ide Reztroid.'
+      });
+
+      addXP(20);
+      playSound('success');
+      triggerMiniConfetti();
+      dismissPrompt();
+      renderColumns();
+      populateSyncIdeaDropdown();
+      showToast('⚡ Ide Diadopsi!', 'Ide otomatis masuk ke tahap Spark Ide (+20 XP)');
+      saveState();
+    }
+
+    // --- MODAL & IDEA FORM ---
+    function openNewIdeaModal() {
+      playSound('pop');
+      document.getElementById('form-idea').reset();
+      document.getElementById('idea-id').value = '';
+      selectTag('Edukasi');
+      document.getElementById('modal-idea').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeNewIdeaModal() {
+      document.getElementById('modal-idea').classList.add('hidden');
+    }
+
+    function selectTag(tagName) {
+      userState.selectedTag = tagName;
+      document.querySelectorAll('.tag-opt').forEach(btn => {
+        if (btn.innerText.includes(tagName) || btn.innerText === tagName) {
+          btn.className = 'tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-brandPurple bg-brandPurpleLight text-brandPurple';
+        } else {
+          btn.className = 'tag-opt px-3 py-1 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600';
+        }
       });
     }
 
-    function openNewIdeaModal() { document.getElementById('modal-idea').classList.remove('hidden'); }
-    function closeNewIdeaModal() { document.getElementById('modal-idea').classList.add('hidden'); }
-    
-    function handleIdeaSubmit() {
+    function handleIdeaSubmit(e) {
+      e.preventDefault();
       const title = document.getElementById('idea-title').value;
+      const format = document.getElementById('idea-format').value;
+      const platform = document.getElementById('idea-platform').value;
+      const date = document.getElementById('idea-date').value;
       const notes = document.getElementById('idea-notes').value;
-      if (!title) return;
 
-      ideas.push({ id: Date.now(), title, stage: 'spark', format: 'Single', platform: 'Instagram', tag: 'Umum', notes, date: new Date().toISOString() });
-      userState.xp += 10;
-      document.getElementById('stat-xp').innerText = userState.xp;
-      
+      const newIdea = {
+        id: 'idea-' + Date.now(),
+        title,
+        stage: 'spark',
+        format,
+        platform,
+        tag: userState.selectedTag,
+        date,
+        notes
+      };
+
+      ideas.unshift(newIdea);
+      addXP(15);
+      playSound('coin');
+      triggerMiniConfetti();
       closeNewIdeaModal();
       renderColumns();
-      syncToCloud(); 
-      showToast('⚡ Ide Tersimpan ke Cloud! (+10 XP)');
-      document.getElementById('idea-title').value = '';
-      document.getElementById('idea-notes').value = '';
+      populateSyncIdeaDropdown();
+      showToast('🎉 Ide Tersimpan!', 'Ide barumu berhasil ditambahkan & disinkronkan! (+15 XP)');
+      saveState();
+
+      const q1 = quests.find(q => q.id === 'q1');
+      if (q1 && !q1.completed) {
+        q1.progress += 1;
+        if (q1.progress >= q1.target) q1.completed = true;
+        renderQuests();
+      }
     }
 
-    function generateRandomPrompt() {
-      const p = reztroidPrompts[Math.floor(Math.random() * reztroidPrompts.length)];
-      document.getElementById('prompt-tag').innerText = p.tag;
-      document.getElementById('prompt-text').innerText = p.text;
-      document.getElementById('prompt-card').classList.remove('hidden');
-    }
-    function adoptPromptToIdea() {
-      document.getElementById('idea-title').value = document.getElementById('prompt-text').innerText;
-      document.getElementById('prompt-card').classList.add('hidden');
-      openNewIdeaModal();
-    }
-
+    // --- FEED DESIGNER STUDIO (3x3 GRID) ---
     function renderFeedGrid() {
       const grid = document.getElementById('feed-grid');
       grid.innerHTML = '';
-      feedGrid.forEach((tile, i) => {
-        const div = document.createElement('div');
-        div.className = `p-2 rounded-lg cursor-pointer transition-all flex flex-col justify-center ${tile.color} ${activeTileIndex === i ? 'ring-4 ring-brandPurple scale-[1.02]' : ''}`;
-        div.innerHTML = `<p class="text-[8px] font-bold uppercase opacity-70">${tile.sub}</p><h5 class="text-[10px] font-extrabold leading-tight mt-0.5 line-clamp-3">${tile.title}</h5>`;
-        div.onclick = () => { activeTileIndex = i; renderFeedGrid(); document.getElementById('inspector-title').value = tile.title; document.getElementById('inspector-sub').value = tile.sub; };
-        grid.appendChild(div);
+
+      feedGrid.forEach((tile, index) => {
+        const itemEl = document.createElement('div');
+        const isSelected = index === userState.activeTileIndex;
+        
+        itemEl.className = `relative cursor-pointer rounded-xl p-2.5 flex flex-col justify-between overflow-hidden transition-all duration-150 ${tile.color} ${
+          isSelected ? 'ring-4 ring-brandPurple ring-offset-2 scale-[1.02]' : 'hover:scale-[0.98]'
+        }`;
+        
+        itemEl.draggable = true;
+        itemEl.ondragstart = (e) => dragFeedStart(e, index);
+        itemEl.ondragend = (e) => dragFeedEnd(e);
+        itemEl.ondragover = (e) => allowDrop(e);
+        itemEl.ondragenter = (e) => dragEnterTile(e, itemEl);
+        itemEl.ondragleave = (e) => dragLeaveTile(e, itemEl);
+        itemEl.ondrop = (e) => dropFeedTile(e, index, itemEl);
+
+        let iconBadge = '';
+        if (tile.type === 'carousel') {
+          iconBadge = `<div class="absolute top-2 right-2 bg-black/40 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded-md font-bold flex items-center gap-0.5">
+            <i data-lucide="layers" class="w-2.5 h-2.5"></i> ${tile.slides || 5}
+          </div>`;
+        } else if (tile.type === 'reel') {
+          iconBadge = `<div class="absolute top-2 right-2 bg-black/40 backdrop-blur-sm text-white text-[10px] p-1 rounded-md">
+            <i data-lucide="video" class="w-2.5 h-2.5"></i>
+          </div>`;
+        }
+
+        itemEl.innerHTML = `
+          ${iconBadge}
+          <div class="text-[9px] font-black uppercase opacity-75 truncate max-w-[80%]">${tile.sub || 'Post'}</div>
+          <div class="my-auto">
+            <h5 class="font-extrabold text-[11px] leading-tight line-clamp-3">${tile.title}</h5>
+          </div>
+          <div class="text-[8px] font-bold opacity-60 self-end">#${index + 1}</div>
+        `;
+
+        itemEl.onclick = () => selectTile(index);
+        grid.appendChild(itemEl);
       });
+
+      lucide.createIcons();
+    }
+
+    function selectTile(index) {
+      userState.activeTileIndex = index;
+      const tile = feedGrid[index] || feedGrid[0];
+      if (!tile) return;
+      
+      document.getElementById('inspector-slot-badge').innerText = `Slot #${index + 1}`;
+      document.getElementById('inspector-title').value = tile.title;
+      document.getElementById('inspector-sub').value = tile.sub || '';
+
+      setTileType(tile.type, false);
+      renderFeedGrid();
+    }
+
+    function setTileType(type, triggerSave = true) {
+      ['carousel', 'single', 'reel'].forEach(t => {
+        const btn = document.getElementById(`type-btn-${t}`);
+        if (t === type) {
+          btn.className = "py-2 text-xs font-bold rounded-xl border-2 border-brandPurple bg-brandPurpleLight text-brandPurple flex items-center justify-center gap-1";
+        } else {
+          btn.className = "py-2 text-xs font-bold rounded-xl border-2 border-slate-200 text-slate-600 flex items-center justify-center gap-1";
+        }
+      });
+
+      if (triggerSave) {
+        feedGrid[userState.activeTileIndex].type = type;
+        if (type === 'carousel') feedGrid[userState.activeTileIndex].slides = 5;
+        renderFeedGrid();
+        saveState();
+      }
+    }
+
+    function setTileColor(colorClass) {
+      playSound('pop');
+      feedGrid[userState.activeTileIndex].color = colorClass;
+      renderFeedGrid();
+      saveState();
     }
 
     function updateActiveTile() {
-      feedGrid[activeTileIndex].title = document.getElementById('inspector-title').value;
-      feedGrid[activeTileIndex].sub = document.getElementById('inspector-sub').value;
+      const title = document.getElementById('inspector-title').value;
+      const sub = document.getElementById('inspector-sub').value;
+      
+      feedGrid[userState.activeTileIndex].title = title || 'Draft Konten';
+      feedGrid[userState.activeTileIndex].sub = sub || '';
       renderFeedGrid();
-    }
-    
-    function setTileColor(color) { feedGrid[activeTileIndex].color = color; renderFeedGrid(); }
-
-    function saveActiveTile() {
-      userState.xp += 5;
-      document.getElementById('stat-xp').innerText = userState.xp;
-      syncToCloud(); 
-      showToast('✅ Slot Disimpan! (+5 XP)');
+      saveState();
     }
 
-    function exportFeedPNG() {
-      showToast('📸 Mengekspor gambar...');
-      html2canvas(document.getElementById('phone-mockup'), { scale: 2, backgroundColor: null }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `Reztroid-Feed-${Date.now()}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        userState.xp += 20; document.getElementById('stat-xp').innerText = userState.xp; syncToCloud();
-        confetti({particleCount: 80});
+    function populateSyncIdeaDropdown() {
+      const select = document.getElementById('inspector-sync-idea');
+      select.innerHTML = '<option value="">-- Pilih ide dari Ideation Board --</option>';
+      ideas.forEach(idea => {
+        const opt = document.createElement('option');
+        opt.value = idea.id;
+        opt.innerText = `[${idea.format}] ${idea.title}`;
+        select.appendChild(opt);
       });
     }
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
+    function syncSelectedIdeaToSlot() {
+      const ideaId = document.getElementById('inspector-sync-idea').value;
+      if (!ideaId) return;
+
+      const idea = ideas.find(i => String(i.id) === String(ideaId));
+      if (idea) {
+        document.getElementById('inspector-title').value = idea.title;
+        document.getElementById('inspector-sub').value = idea.tag;
+        
+        feedGrid[userState.activeTileIndex].title = idea.title;
+        feedGrid[userState.activeTileIndex].sub = idea.tag;
+        
+        if (idea.format === 'Carousel') {
+          setTileType('carousel', true);
+        } else if (String(idea.format).includes('Reel')) {
+          setTileType('reel', true);
+        } else {
+          setTileType('single', true);
+        }
+        
+        playSound('coin');
+        renderFeedGrid();
+        showToast('🔗 Terhubung!', 'Data ide berhasil diterapkan pada feed slot!');
+        saveState();
+      }
+    }
+
+    function saveActiveTile() {
+      playSound('success');
+      addXP(10);
+      showToast('✅ Slot Disimpan', `Slot #${userState.activeTileIndex + 1} feed siap ditampilkan! (+10 XP)`);
+    }
+
+    function resetFeedToDemo() {
+      feedGrid.forEach((tile, i) => {
+        tile.title = `Konten Edukasi #${i + 1}`;
+        tile.sub = 'Slide Preview';
+        tile.type = i % 2 === 0 ? 'carousel' : 'single';
+        tile.color = i % 2 === 0 ? 'bg-brandPurple text-white' : 'bg-brandLime text-darkText';
+      });
+      selectTile(0);
+      playSound('pop');
+      saveState();
+    }
+
+    function triggerFeedConfetti() {
+      addXP(30);
+      playSound('success');
+      confetti({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+      showToast('🚀 Feed Layout Selesai!', 'Visual grid feed berhasil disimpan ke Cloud! (+30 XP)');
+    }
+
+    // --- QUESTS & GAMIFICATION ---
+    function renderQuests() {
+      const list = document.getElementById('quest-list');
+      list.innerHTML = '';
+      let unclaimedCount = 0;
+
+      quests.forEach(q => {
+        if (q.completed && !q.claimed) unclaimedCount++;
+
+        const item = document.createElement('div');
+        item.className = "flex items-center justify-between p-3.5 rounded-2xl border-2 " + 
+          (q.completed ? "border-emerald-200 bg-emerald-50/60" : "border-slate-200 bg-slate-50/50");
+
+        let actionBtn = '';
+        if (q.claimed) {
+          actionBtn = `<span class="text-xs font-black text-emerald-600 flex items-center gap-1">
+            <i data-lucide="check" class="w-4 h-4"></i> Diklaim
+          </span>`;
+        } else if (q.completed) {
+          actionBtn = `<button onclick="claimQuest('${q.id}')" class="btn-duo-lime px-3.5 py-1.5 rounded-xl font-black text-xs flex items-center gap-1">
+            <i data-lucide="gift" class="w-3.5 h-3.5"></i> Klaim +${q.xp} XP
+          </button>`;
+        } else {
+          actionBtn = `<span class="text-xs font-bold text-slate-400">${q.progress}/${q.target}</span>`;
+        }
+
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl ${q.completed ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500'} flex items-center justify-center font-black text-xs">
+              ${q.completed ? '✓' : '⚡'}
+            </div>
+            <div>
+              <p class="font-extrabold text-xs sm:text-sm text-darkText">${q.text}</p>
+              <div class="w-32 bg-slate-200 h-1.5 rounded-full mt-1 overflow-hidden">
+                <div class="bg-brandPurple h-full rounded-full" style="width: ${Math.min(100, (q.progress/q.target)*100)}%"></div>
+              </div>
+            </div>
+          </div>
+          <div>${actionBtn}</div>
+        `;
+
+        list.appendChild(item);
+      });
+
+      const badge = document.getElementById('badge-quest-count');
+      if (unclaimedCount > 0) {
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    function claimQuest(questId) {
+      const q = quests.find(item => item.id === questId);
+      if (q && q.completed && !q.claimed) {
+        q.claimed = true;
+        addXP(q.xp);
+        playSound('coin');
+        triggerMiniConfetti();
+        renderQuests();
+        showToast('🎁 Hadiah Didapatkan!', `Kamu mendapatkan bonus ${q.xp} XP!`);
+        saveState();
+      }
+    }
+
+    function addXP(amount) {
+      userState.xp = Number(userState.xp || 0) + amount;
+      updateStatsUI();
+      saveState();
+    }
+
+    function updateStatsUI() {
+      document.getElementById('stat-xp').innerText = userState.xp;
+      document.getElementById('stat-streak').innerText = userState.streak;
+      document.getElementById('lb-user-xp').innerText = `${userState.xp} XP`;
+      
+      const progressPercent = Math.min(100, (userState.xp % 100));
+      document.getElementById('league-progress').style.width = `${progressPercent}%`;
+    }
+
+    function triggerMiniConfetti() {
+      confetti({
+        particleCount: 40,
+        spread: 50,
+        origin: { y: 0.7 }
+      });
+    }
+
+    // --- TOAST NOTIFICATIONS ---
+    function showToast(title, msg) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').innerText = title;
       document.getElementById('toast-msg').innerText = msg;
-      t.classList.remove('translate-y-24', 'opacity-0');
-      setTimeout(() => t.classList.add('translate-y-24', 'opacity-0'), 3000);
+
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 3200);
+    }
+
+    // --- HTML5 DRAG AND DROP KANBAN ---
+    let draggedIdeaId = null;
+
+    function dragIdeaStart(e, id) {
+      draggedIdeaId = id;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', id);
+      playSound('pop');
+    }
+
+    function dragIdeaEnd(e) {
+      e.target.classList.remove('dragging');
+      draggedIdeaId = null;
+    }
+
+    function allowDrop(e) {
+      e.preventDefault();
+    }
+
+    function dragEnterCol(e) {
+      e.preventDefault();
+      e.currentTarget.classList.add('drag-over-col');
+    }
+
+    function dragLeaveCol(e) {
+      e.currentTarget.classList.remove('drag-over-col');
+    }
+
+    function dropIdea(e, stage) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('drag-over-col');
+      if (draggedIdeaId) {
+        moveIdea(draggedIdeaId, stage, null);
+      }
+    }
+
+    // --- HTML5 DRAG AND DROP FEED GRID ---
+    let draggedFeedIndex = null;
+
+    function dragFeedStart(e, index) {
+      draggedFeedIndex = index;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index);
+      playSound('pop');
+    }
+
+    function dragFeedEnd(e) {
+      e.target.classList.remove('dragging');
+      draggedFeedIndex = null;
+    }
+
+    function dragEnterTile(e, el) {
+      e.preventDefault();
+      if (draggedFeedIndex !== null) el.classList.add('drag-over-tile');
+    }
+
+    function dragLeaveTile(e, el) {
+      el.classList.remove('drag-over-tile');
+    }
+
+    function dropFeedTile(e, targetIndex, el) {
+      e.preventDefault();
+      el.classList.remove('drag-over-tile');
+      
+      if (draggedFeedIndex !== null && draggedFeedIndex !== targetIndex) {
+        const temp = { ...feedGrid[targetIndex] };
+        const draggedItem = feedGrid[draggedFeedIndex];
+        
+        feedGrid[targetIndex].title = draggedItem.title;
+        feedGrid[targetIndex].sub = draggedItem.sub;
+        feedGrid[targetIndex].type = draggedItem.type;
+        feedGrid[targetIndex].color = draggedItem.color;
+        feedGrid[targetIndex].slides = draggedItem.slides;
+
+        feedGrid[draggedFeedIndex].title = temp.title;
+        feedGrid[draggedFeedIndex].sub = temp.sub;
+        feedGrid[draggedFeedIndex].type = temp.type;
+        feedGrid[draggedFeedIndex].color = temp.color;
+        feedGrid[draggedFeedIndex].slides = temp.slides;
+
+        playSound('coin');
+        renderFeedGrid();
+        saveState();
+      }
+    }
+
+    // --- EXPORT PNG ---
+    function exportFeedPNG() {
+      playSound('success');
+      showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed...');
+      
+      const element = document.getElementById('phone-mockup');
+      
+      setTimeout(() => {
+        html2canvas(element, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'Reztroid_Feed_' + new Date().toISOString().slice(0,10) + '.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+          
+          addXP(25);
+          showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor. (+25 XP)');
+          triggerMiniConfetti();
+        });
+      }, 500);
     }
   </script>
 </body>
