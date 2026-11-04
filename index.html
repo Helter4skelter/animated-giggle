@@ -1659,31 +1659,31 @@
       }
     }
 
-    // --- EXPORT PNG ---
-    function exportFeedPNG() {
-      playSound('success');
-      showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed...');
+ // --- EXPORT PNG YANG SUDAH DIPERBAIKI ---
+function exportFeedPNG() {
+  playSound('success');
+  showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed...');
+  
+  const element = document.getElementById('phone-mockup');
+  
+  setTimeout(() => {
+    html2canvas(element, {
+      scale: 3, // Skala diperbesar biar makin tajam & high-res
+      backgroundColor: '#FFFFFF', // Memaksa latar belakang jadi putih bersih (menghilangkan hitam transparan)
+      useCORS: true,
+      logging: false
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = 'Reztroid_Feed_' + new Date().toISOString().slice(0,10) + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
       
-      const element = document.getElementById('phone-mockup');
-      
-      setTimeout(() => {
-        html2canvas(element, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          logging: false
-        }).then(canvas => {
-          const link = document.createElement('a');
-          link.download = 'Reztroid_Feed_' + new Date().toISOString().slice(0,10) + '.png';
-          link.href = canvas.toDataURL('image/png');
-          link.click();
-          
-          addXP(25);
-          showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor. (+25 XP)');
-          triggerMiniConfetti();
-        });
-      }, 500);
-    }
+      addXP(25);
+      showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor dengan latar putih bersih! (+25 XP)');
+      triggerMiniConfetti();
+    });
+  }, 500);
+}
   </script>
 </body>
 </html>
