@@ -154,6 +154,13 @@
     ::-webkit-scrollbar-thumb:hover {
       background: #94A3B8;
     }
+
+    /* Mobile & Tablet Responsive Enhancements */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @media (max-width: 640px) {
+      .duo-card { border-radius: 1rem; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased text-darkText selection:bg-brandLime selection:text-darkText">
@@ -187,80 +194,80 @@
   </div>
 
   <!-- Top Gamified Duolingo Header Bar -->
-  <header class="sticky top-0 z-40 bg-white border-b-2 border-slate-200 px-4 lg:px-8 py-3">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
+  <header class="sticky top-0 z-40 bg-white border-b-2 border-slate-200 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap md:flex-nowrap items-center justify-between gap-2.5 sm:gap-4">
       
       <!-- Brand Logo & Mascot -->
-      <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('board')">
-        <div class="w-10 h-10 rounded-2xl bg-brandPurple flex items-center justify-center text-brandLime font-black text-xl shadow-duo-purple animate-mascot">
+      <div class="flex items-center gap-2.5 sm:gap-3 cursor-pointer shrink-0" onclick="switchTab('board')">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-brandPurple flex items-center justify-center text-brandLime font-black text-lg sm:text-xl shadow-duo-purple animate-mascot">
           👾
         </div>
         <div>
-          <div class="flex items-center gap-1.5">
-            <span class="font-black text-xl tracking-tight text-brandPurple">Reztroid<span class="text-darkText bg-brandLime px-1.5 py-0.5 rounded-lg ml-0.5 text-sm uppercase">Spark</span></span>
+          <div class="flex items-center gap-1">
+            <span class="font-black text-lg sm:text-xl tracking-tight text-brandPurple">Reztroid<span class="text-darkText bg-brandLime px-1.5 py-0.5 rounded-lg ml-0.5 text-xs sm:text-sm uppercase">Spark</span></span>
           </div>
-          <p class="text-[11px] font-bold text-slate-400 hidden sm:block uppercase tracking-wider">Level 3 • Content Wizard</p>
+          <p class="text-[10px] sm:text-[11px] font-bold text-slate-400 hidden sm:block uppercase tracking-wider">Level 3 • Content Wizard</p>
         </div>
       </div>
 
-      <!-- Navigation Tabs (Duolingo Pill Tabs) -->
-      <nav class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
-        <button id="nav-board" onclick="switchTab('board')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-white text-brandPurple shadow-sm">
-          <i data-lucide="sparkles" class="w-4 h-4"></i>
-          <span>Ideation Path</span>
-        </button>
-        <button id="nav-feed" onclick="switchTab('feed')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all">
-          <i data-lucide="layout-grid" class="w-4 h-4"></i>
-          <span>Feed Designer</span>
-        </button>
-        <button id="nav-quests" onclick="switchTab('quests')" class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all">
-          <i data-lucide="target" class="w-4 h-4"></i>
-          <span class="hidden sm:inline">Quests</span>
-          <span id="badge-quest-count" class="w-2 h-2 rounded-full bg-red-500"></span>
-        </button>
-      </nav>
-
-      <!-- Stats Bar (Streak, XP & Gem counters) -->
-      <div class="flex items-center gap-2 sm:gap-4">
+      <!-- Stats Bar (Streak, XP & Gem counters) - stays on top right on mobile, right side on desktop -->
+      <div class="flex items-center gap-1.5 sm:gap-3 order-2 md:order-3 shrink-0">
         
         <!-- Streak Counter -->
-        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-orange-50 border-2 border-orange-200 text-orange-600 font-extrabold text-sm" title="Streak Kontenmu!">
-          <span class="text-base">🔥</span>
+        <div class="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-orange-50 border-2 border-orange-200 text-orange-600 font-extrabold text-xs sm:text-sm" title="Streak Kontenmu!">
+          <span class="text-sm sm:text-base">🔥</span>
           <span id="stat-streak">7</span>
-          <span class="text-xs text-orange-400 hidden md:inline">Hari</span>
+          <span class="text-xs text-orange-400 hidden lg:inline">Hari</span>
         </div>
 
         <!-- Sparks / Energy -->
-        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-brandPurpleLight border-2 border-purple-200 text-brandPurple font-extrabold text-sm" title="Spark XP terkumpul">
-          <span class="text-base">⚡</span>
+        <div class="flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl sm:rounded-2xl bg-brandPurpleLight border-2 border-purple-200 text-brandPurple font-extrabold text-xs sm:text-sm" title="Spark XP terkumpul">
+          <span class="text-sm sm:text-base">⚡</span>
           <span id="stat-xp">340</span>
-          <span class="text-xs text-brandPurple/60 hidden md:inline">XP</span>
+          <span class="text-xs text-brandPurple/60 hidden lg:inline">XP</span>
         </div>
 
         <!-- Quick Action "+ Idea" Button -->
-        <button onclick="openNewIdeaModal()" class="btn-duo-lime flex items-center gap-1.5 px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm">
+        <button onclick="openNewIdeaModal()" class="btn-duo-lime flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl font-black text-xs sm:text-sm">
           <i data-lucide="plus-circle" class="w-4 h-4"></i>
           <span class="hidden sm:inline">Tambah Ide</span>
         </button>
       </div>
 
+      <!-- Navigation Tabs (Duolingo Pill Tabs) - full width row on mobile, centered on tablet/desktop -->
+      <nav class="w-full md:w-auto order-3 md:order-2 flex items-center justify-between sm:justify-center gap-1.5 sm:gap-2 bg-slate-100 p-1 sm:p-1.5 rounded-2xl border border-slate-200 overflow-x-auto no-scrollbar">
+        <button id="nav-board" onclick="switchTab('board')" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all bg-white text-brandPurple shadow-sm whitespace-nowrap">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+          <span>Ideation Path</span>
+        </button>
+        <button id="nav-feed" onclick="switchTab('feed')" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all whitespace-nowrap">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+          <span>Feed Designer</span>
+        </button>
+        <button id="nav-quests" onclick="switchTab('quests')" class="flex-1 md:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold text-slate-500 hover:text-darkText transition-all whitespace-nowrap">
+          <i data-lucide="target" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i>
+          <span>Quests</span>
+          <span id="badge-quest-count" class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+        </button>
+      </nav>
+
     </div>
   </header>
 
   <!-- XP Progress Milestone Subbar -->
-  <div class="bg-brandPurpleLight/50 border-b border-purple-100 px-4 py-2 text-xs">
-    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2 flex-1">
-        <span class="font-bold text-brandPurple flex items-center gap-1">
-          <i data-lucide="award" class="w-4 h-4"></i> Diamond League
+  <div class="bg-brandPurpleLight/50 border-b border-purple-100 px-3 sm:px-6 lg:px-8 py-2 text-xs">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2 flex-1 min-w-0">
+        <span class="font-bold text-brandPurple flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] sm:text-xs">
+          <i data-lucide="award" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0"></i> Diamond League
         </span>
-        <div class="w-full max-w-xs bg-purple-200 h-2.5 rounded-full overflow-hidden">
+        <div class="w-full max-w-[120px] sm:max-w-xs bg-purple-200 h-2 sm:h-2.5 rounded-full overflow-hidden">
           <div id="league-progress" class="bg-brandPurple h-full rounded-full transition-all duration-500" style="width: 68%;"></div>
         </div>
-        <span class="font-bold text-slate-500 text-[11px] hidden sm:inline">68/100 XP menuju Master Feed</span>
+        <span class="font-bold text-slate-500 text-[11px] hidden md:inline whitespace-nowrap">68/100 XP menuju Master Feed</span>
       </div>
-      <div class="text-slate-600 font-semibold text-[11px] flex items-center gap-1.5">
-        <span id="cloud-indicator" class="w-2 h-2 rounded-full bg-brandLimeDark animate-pulse"></span>
+      <div class="text-slate-600 font-semibold text-[10px] sm:text-[11px] flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+        <span id="cloud-indicator" class="w-2 h-2 rounded-full bg-brandLimeDark animate-pulse shrink-0"></span>
         <span id="cloud-status-text">Cloud Sync Aktif</span>
       </div>
     </div>
@@ -338,7 +345,7 @@
             <span id="count-col-spark" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
           </div>
 
-          <div id="col-spark" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'spark')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+          <div id="col-spark" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'spark')" class="flex flex-col gap-3 min-h-[180px] md:min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
             <!-- Dynamic Idea Cards will be inserted here -->
           </div>
         </div>
@@ -355,7 +362,7 @@
             <span id="count-col-draft" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
           </div>
 
-          <div id="col-draft" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'draft')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+          <div id="col-draft" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'draft')" class="flex flex-col gap-3 min-h-[180px] md:min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
             <!-- Dynamic Idea Cards -->
           </div>
         </div>
@@ -372,7 +379,7 @@
             <span id="count-col-visual" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
           </div>
 
-          <div id="col-visual" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'visual')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+          <div id="col-visual" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'visual')" class="flex flex-col gap-3 min-h-[180px] md:min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
             <!-- Dynamic Idea Cards -->
           </div>
         </div>
@@ -389,7 +396,7 @@
             <span id="count-col-ready" class="text-xs font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
           </div>
 
-          <div id="col-ready" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'ready')" class="flex flex-col gap-3 min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
+          <div id="col-ready" ondragover="allowDrop(event)" ondragenter="dragEnterCol(event)" ondragleave="dragLeaveCol(event)" ondrop="dropIdea(event, 'ready')" class="flex flex-col gap-3 min-h-[180px] md:min-h-[340px] p-2 rounded-2xl bg-slate-100/70 border-2 border-dashed border-slate-300 transition-colors">
             <!-- Dynamic Idea Cards -->
           </div>
         </div>
@@ -411,14 +418,14 @@
           <h2 class="text-2xl font-black tracking-tight mt-1">Simulator Feed & Estetika Visual</h2>
           <p class="text-xs text-slate-500 font-medium">Klik atau geser (drag & drop) pada slot manapun untuk merancang cover, headline, warna palet, atau assign dari bank ide!</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button onclick="resetFeedToDemo()" class="btn-duo-white px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 flex items-center gap-1.5">
+        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <button onclick="resetFeedToDemo()" class="btn-duo-white px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 flex items-center justify-center gap-1.5 flex-1 sm:flex-initial whitespace-nowrap">
             <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Grid
           </button>
-          <button onclick="exportFeedPNG()" class="btn-duo-lime px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 text-darkText">
+          <button onclick="exportFeedPNG()" class="btn-duo-lime px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 text-darkText flex-1 sm:flex-initial whitespace-nowrap">
             <i data-lucide="download" class="w-3.5 h-3.5"></i> Ekspor PNG
           </button>
-          <button onclick="triggerFeedConfetti()" class="btn-duo-purple px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5">
+          <button onclick="triggerFeedConfetti()" class="btn-duo-purple px-4 py-2 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 w-full sm:w-auto whitespace-nowrap">
             <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Simpan Feed (+30 XP)
           </button>
         </div>
@@ -695,8 +702,8 @@
   </main>
 
   <!-- ==================== MODAL: ADD / EDIT IDEA ==================== -->
-  <div id="modal-idea" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="modal-content bg-white rounded-3xl border-4 border-slate-800 shadow-2xl max-w-lg w-full p-6 space-y-4 transform transition-all">
+  <div id="modal-idea" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="modal-content bg-white rounded-3xl border-4 border-slate-800 shadow-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 transform transition-all my-auto max-h-[92vh] overflow-y-auto">
       
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
         <div class="flex items-center gap-2">
