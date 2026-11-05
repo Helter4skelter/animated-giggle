@@ -1677,9 +1677,9 @@ async function exportFeedPNG() {
 
   setTimeout(() => {
     try {
-      const scale = 3; // Resolusi @3x (1320 x 1695 px)
+      const scale = 3; // Resolusi @3x (1320 x 1740 px)
       const W = 440;
-      const H = 565;
+      const H = 580;
       const pad = 28; // Margin luar simetris kiri-kanan-atas-bawah
 
       const canvas = document.createElement('canvas');
@@ -1907,51 +1907,51 @@ async function exportFeedPNG() {
         ctx.save();
         ctx.fillStyle = txtColor;
         ctx.globalAlpha = 0.78;
-        ctx.font = `900 8.5px ${fontSans}`;
+        ctx.font = `900 7.8px ${fontSans}`;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         const subRaw = String(tile.sub || 'POST').toUpperCase();
-        const maxSubW = tile.type === 'single' ? tileSize - 20 : tileSize - 50;
+        const maxSubW = tile.type === 'single' ? tileSize - 18 : tileSize - 38;
         let subTxt = subRaw;
         while (ctx.measureText(subTxt).width > maxSubW && subTxt.length > 1) {
           subTxt = subTxt.slice(0, -1);
         }
-        ctx.fillText(subTxt, tx + 10, ty + 15);
+        ctx.fillText(subTxt, tx + 9, ty + 15);
         ctx.restore();
 
         // Badge Carousel / Reel di kanan atas (Simetris)
         if (tile.type === 'carousel') {
-          const bW = 28;
-          const bH = 16;
-          const bX = tx + tileSize - bW - 7;
-          const bY = ty + 7;
+          const bW = 25;
+          const bH = 15;
+          const bX = tx + tileSize - bW - 6;
+          const bY = ty + 7.5;
           roundRect(bX, bY, bW, bH, 5);
           ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
           ctx.fill();
 
           // Ikon Layers kecil + angka slides sejajar vertikal
-          const icX = bX + 8;
+          const icX = bX + 7.5;
           const icY = bY + bH / 2;
           ctx.strokeStyle = '#FFFFFF';
           ctx.lineWidth = 1.1;
           ctx.beginPath();
-          ctx.moveTo(icX - 3.5, icY - 1.5);
-          ctx.lineTo(icX, icY - 3.5);
-          ctx.lineTo(icX + 3.5, icY - 1.5);
-          ctx.lineTo(icX, icY + 0.5);
+          ctx.moveTo(icX - 3.2, icY - 1.4);
+          ctx.lineTo(icX, icY - 3.2);
+          ctx.lineTo(icX + 3.2, icY - 1.4);
+          ctx.lineTo(icX, icY + 0.4);
           ctx.closePath();
           ctx.stroke();
           ctx.beginPath();
-          ctx.moveTo(icX - 3.5, icY + 1.2);
-          ctx.lineTo(icX, icY + 3.2);
-          ctx.lineTo(icX + 3.5, icY + 1.2);
+          ctx.moveTo(icX - 3.2, icY + 1.1);
+          ctx.lineTo(icX, icY + 2.9);
+          ctx.lineTo(icX + 3.2, icY + 1.1);
           ctx.stroke();
 
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = `800 8.5px ${fontSans}`;
+          ctx.font = `800 8px ${fontSans}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(String(tile.slides || 5), bX + 20, icY + 0.5);
+          ctx.fillText(String(tile.slides || 5), bX + 18, icY + 0.5);
         } else if (tile.type === 'reel') {
           const bW = 20;
           const bH = 16;
@@ -2003,7 +2003,7 @@ async function exportFeedPNG() {
       });
 
       // 6. Bottom Navigation Bar (5 Ikon Sejajar & Simetris)
-      const navY = gridBoxY + gridBoxSize + 28;
+      const navY = gridBoxY + gridBoxSize + 26;
       const step = innerW / 5;
 
       ctx.lineCap = 'round';
