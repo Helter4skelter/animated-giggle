@@ -1666,30 +1666,93 @@
       }
     }
 
- // --- EXPORT PNG YANG SUDAH DIPERBAIKI ---
-function exportFeedPNG() {
+ // --- EXPORT PNG ANTI TERPOTONG (FIXED TEXT BASELINE & FRAME PADDING) ---
+async function exportFeedPNG() {
   playSound('success');
-  showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed...');
+  showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed resolusi tinggi...');
   
   const element = document.getElementById('phone-mockup');
-  
+  if (!element) return;
+
+  // Pastikan font sudah termuat sempurna sebelum render
+  if (document.fonts && document.fonts.ready) {
+    await document.fonts.ready;
+  }
+
   setTimeout(() => {
-    html2canvas(element, {
-      scale: 3, // Skala diperbesar biar makin tajam & high-res
-      backgroundColor: '#FFFFFF', // Memaksa latar belakang jadi putih bersih (menghilangkan hitam transparan)
+    // Buat wrapper sementara di luar layar dengan ukuran pas (lebar 420px proporsi iPhone)
+    // agar saat diekspor di HP maupun Laptop hasilnya selalu utuh dan tidak terpotong scroll
+    const exportWrapper = document.createElement('div');
+    exportWrapper.style.position = 'fixed';
+    exportWrapper.style.left = '-9999px';
+    exportWrapper.style.top = '0';
+    exportWrapper.style.width = '460px';
+    exportWrapper.style.padding = '24px';
+    exportWrapper.style.backgroundColor = '#F8FAFC';
+    exportWrapper.style.zIndex = '-1';
+
+    const clone = element.cloneNode(true);
+    clone.style.width = '412px';
+    clone.style.maxWidth = '412px';
+    clone.style.margin = '0 auto';
+    clone.style.transform = 'none';
+    clone.style.boxShadow = 'none';
+
+    // Perbaiki bug html2canvas yang memotong bagian bawah huruf (text baseline clipping)
+    // akibat class truncate / line-clamp / overflow-hidden
+    clone.querySelectorAll('*').forEach(el => {
+      const cls = el.className;
+      if (typeof cls === 'string') {
+        if (cls.includes('truncate') || cls.includes('line-clamp')) {
+          el.style.overflow = 'visible';
+          el.style.textOverflow = 'clip';
+          el.style.whiteSpace = 'normal';
+          el.style.webkitLineClamp = 'unset';
+          el.style.display = 'block';
+        }
+        // Hilangkan ring highlight ungu pada tile yang sedang aktif agar hasil PNG bersih
+        if (cls.includes('ring-4')) {
+          el.classList.remove('ring-4', 'ring-brandPurple', 'ring-offset-2', 'scale-[1.02]');
+        }
+      }
+      // Beri ruang vertikal ekstra pada teks agar huruf tidak terbelah dua
+      const tag = el.tagName;
+      if (['H3', 'H5', 'P', 'SPAN', 'DIV', 'B'].includes(tag)) {
+        el.style.lineHeight = '1.35';
+        el.style.paddingBottom = '1px';
+      }
+    });
+
+    exportWrapper.appendChild(clone);
+    document.body.appendChild(exportWrapper);
+
+    html2canvas(exportWrapper, {
+      scale: 3, // Resolusi tinggi setara @3x iPhone (1380px width)
+      backgroundColor: '#F8FAFC',
       useCORS: true,
-      logging: false
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      width: exportWrapper.offsetWidth,
+      height: exportWrapper.offsetHeight,
+      windowWidth: 1200,
+      windowHeight: exportWrapper.offsetHeight + 100
     }).then(canvas => {
+      document.body.removeChild(exportWrapper);
       const link = document.createElement('a');
       link.download = 'Reztroid_Feed_' + new Date().toISOString().slice(0,10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
       
       addXP(25);
-      showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor dengan latar putih bersih! (+25 XP)');
+      showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor utuh tanpa terpotong! (+25 XP)');
       triggerMiniConfetti();
+    }).catch(err => {
+      if (document.body.contains(exportWrapper)) document.body.removeChild(exportWrapper);
+      console.error('Export error:', err);
+      showToast('❌ Gagal Ekspor', 'Terjadi kesalahan saat mengekspor gambar.');
     });
-  }, 500);
+  }, 300);
 }
   </script>
 </body>
