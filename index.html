@@ -462,7 +462,7 @@
             </div>
 
             <!-- 3x3 Feed Grid -->
-            <div id="feed-grid" class="grid grid-cols-3 gap-1.5 aspect-square bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
+            <div id="feed-grid" class="grid grid-cols-3 grid-rows-3 gap-1.5 aspect-square bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
               <!-- 9 Tiles will be generated here -->
             </div>
 
@@ -1322,7 +1322,7 @@
         const itemEl = document.createElement('div');
         const isSelected = index === userState.activeTileIndex;
         
-        itemEl.className = `relative cursor-pointer rounded-xl p-2.5 flex flex-col justify-between overflow-hidden transition-all duration-150 ${tile.color} ${
+        itemEl.className = `relative aspect-square cursor-pointer rounded-xl p-2.5 flex flex-col justify-between overflow-hidden transition-all duration-150 ${tile.color} ${
           isSelected ? 'ring-4 ring-brandPurple ring-offset-2 scale-[1.02]' : 'hover:scale-[0.98]'
         }`;
         
@@ -1347,7 +1347,7 @@
 
         itemEl.innerHTML = `
           ${iconBadge}
-          <div class="text-[9px] font-black uppercase opacity-75 truncate max-w-[80%]">${tile.sub || 'Post'}</div>
+          <div class="text-[9px] font-black uppercase opacity-75 truncate max-w-[65%] leading-none pt-0.5">${tile.sub || 'Post'}</div>
           <div class="my-auto">
             <h5 class="font-extrabold text-[11px] leading-tight line-clamp-3">${tile.title}</h5>
           </div>
@@ -1666,93 +1666,430 @@
       }
     }
 
- // --- EXPORT PNG ANTI TERPOTONG (FIXED TEXT BASELINE & FRAME PADDING) ---
+ // --- EXPORT PNG PRESISI SIMETRIS (NATIVE CANVAS 2D @3X RENDERER) ---
 async function exportFeedPNG() {
   playSound('success');
-  showToast('📸 Memproses...', 'Mempersiapkan ekspor gambar Feed resolusi tinggi...');
-  
-  const element = document.getElementById('phone-mockup');
-  if (!element) return;
+  showToast('📸 Memproses...', 'Merender gambar Feed simetris resolusi tinggi...');
 
-  // Pastikan font sudah termuat sempurna sebelum render
   if (document.fonts && document.fonts.ready) {
     await document.fonts.ready;
   }
 
   setTimeout(() => {
-    // Buat wrapper sementara di luar layar dengan ukuran pas (lebar 420px proporsi iPhone)
-    // agar saat diekspor di HP maupun Laptop hasilnya selalu utuh dan tidak terpotong scroll
-    const exportWrapper = document.createElement('div');
-    exportWrapper.style.position = 'fixed';
-    exportWrapper.style.left = '-9999px';
-    exportWrapper.style.top = '0';
-    exportWrapper.style.width = '460px';
-    exportWrapper.style.padding = '24px';
-    exportWrapper.style.backgroundColor = '#F8FAFC';
-    exportWrapper.style.zIndex = '-1';
+    try {
+      const scale = 3; // Resolusi @3x (1320 x 1695 px)
+      const W = 440;
+      const H = 565;
+      const pad = 28; // Margin luar simetris kiri-kanan-atas-bawah
 
-    const clone = element.cloneNode(true);
-    clone.style.width = '412px';
-    clone.style.maxWidth = '412px';
-    clone.style.margin = '0 auto';
-    clone.style.transform = 'none';
-    clone.style.boxShadow = 'none';
+      const canvas = document.createElement('canvas');
+      canvas.width = W * scale;
+      canvas.height = H * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
 
-    // Perbaiki bug html2canvas yang memotong bagian bawah huruf (text baseline clipping)
-    // akibat class truncate / line-clamp / overflow-hidden
-    clone.querySelectorAll('*').forEach(el => {
-      const cls = el.className;
-      if (typeof cls === 'string') {
-        if (cls.includes('truncate') || cls.includes('line-clamp')) {
-          el.style.overflow = 'visible';
-          el.style.textOverflow = 'clip';
-          el.style.whiteSpace = 'normal';
-          el.style.webkitLineClamp = 'unset';
-          el.style.display = 'block';
-        }
-        // Hilangkan ring highlight ungu pada tile yang sedang aktif agar hasil PNG bersih
-        if (cls.includes('ring-4')) {
-          el.classList.remove('ring-4', 'ring-brandPurple', 'ring-offset-2', 'scale-[1.02]');
-        }
+      const fontSans = '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif';
+
+      // Helper menggambar kotak sudut membulat (rounded rectangle)
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
       }
-      // Beri ruang vertikal ekstra pada teks agar huruf tidak terbelah dua
-      const tag = el.tagName;
-      if (['H3', 'H5', 'P', 'SPAN', 'DIV', 'B'].includes(tag)) {
-        el.style.lineHeight = '1.35';
-        el.style.paddingBottom = '1px';
+
+      // 1. Latar Belakang Luar Putih Bersih
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Bingkai Phone Mockup (Tepat di Tengah / Simetris)
+      const phoneX = pad;
+      const phoneY = pad;
+      const phoneW = W - pad * 2; // 384px
+      const phoneH = H - pad * 2; // 509px
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(15, 23, 42, 0.10)';
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 8;
+      roundRect(phoneX, phoneY, phoneW, phoneH, 40);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.restore();
+
+      roundRect(phoneX, phoneY, phoneW, phoneH, 40);
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#1E293B';
+      ctx.stroke();
+
+      // 3. Phone Notch (Tepat di Tengah Horizontal)
+      const notchW = 124;
+      const notchH = 15;
+      roundRect((W - notchW) / 2, phoneY + 18, notchW, notchH, 7.5);
+      ctx.fillStyle = '#1E293B';
+      ctx.fill();
+
+      // 4. Header Profil Instagram
+      const innerX = phoneX + 22; // 50px
+      const innerW = phoneW - 44; // 340px
+      const profY = phoneY + 50;
+
+      // Avatar Gradient Ring
+      const avCx = innerX + 30;
+      const avCy = profY + 28;
+      const avGrad = ctx.createLinearGradient(avCx - 28, avCy + 28, avCx + 28, avCy - 28);
+      avGrad.addColorStop(0, '#FACC15');
+      avGrad.addColorStop(0.5, '#EC4899');
+      avGrad.addColorStop(1, '#5338FF');
+      ctx.beginPath();
+      ctx.arc(avCx, avCy, 28, 0, Math.PI * 2);
+      ctx.fillStyle = avGrad;
+      ctx.fill();
+
+      // Avatar Inner White Circle
+      ctx.beginPath();
+      ctx.arc(avCx, avCy, 25.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+
+      // Emoji Roket tepat di tengah lingkaran avatar
+      ctx.font = `22px ${fontSans}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🚀', avCx, avCy + 1);
+
+      // Teks Profil
+      const textX = innerX + 72;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#0F172A';
+      ctx.font = `800 14.5px ${fontSans}`;
+      const uname = 'heyreztroid';
+      ctx.fillText(uname, textX, profY + 18);
+
+      // Verified Badge di sebelah kanan username
+      const unameW = ctx.measureText(uname).width;
+      const badgeCx = textX + unameW + 11;
+      const badgeCy = profY + 13;
+      ctx.beginPath();
+      ctx.arc(badgeCx, badgeCy, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#EEECFF';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#5338FF';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(badgeCx - 2.8, badgeCy + 0.2);
+      ctx.lineTo(badgeCx - 0.6, badgeCy + 2.4);
+      ctx.lineTo(badgeCx + 3.2, badgeCy - 2.0);
+      ctx.strokeStyle = '#5338FF';
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // Bio Subtitle
+      ctx.fillStyle = '#64748B';
+      ctx.font = `500 11.5px ${fontSans}`;
+      ctx.fillText('Reztroid • Digital Store & Apps', textX, profY + 35);
+
+      // Stats (9 posts & 99.9B followers)
+      ctx.font = `800 11.5px ${fontSans}`;
+      ctx.fillStyle = '#0F172A';
+      ctx.fillText('9', textX, profY + 53);
+      const w9 = ctx.measureText('9 ').width;
+      ctx.font = `700 11.5px ${fontSans}`;
+      ctx.fillStyle = '#334155';
+      ctx.fillText('posts', textX + w9, profY + 53);
+
+      const folX = textX + 58;
+      ctx.font = `800 11.5px ${fontSans}`;
+      ctx.fillStyle = '#0F172A';
+      ctx.fillText('99.9B', folX, profY + 53);
+      const wFol = ctx.measureText('99.9B ').width;
+      ctx.font = `700 11.5px ${fontSans}`;
+      ctx.fillStyle = '#334155';
+      ctx.fillText('followers', folX + wFol, profY + 53);
+
+      // Garis Pemisah Header Profil
+      const divY = profY + 68;
+      ctx.beginPath();
+      ctx.moveTo(innerX, divY);
+      ctx.lineTo(innerX + innerW, divY);
+      ctx.strokeStyle = '#F1F5F9';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // 5. Kotak 3x3 Feed Grid (100% Persegi Simetris)
+      const gridBoxX = innerX;
+      const gridBoxY = divY + 14;
+      const gridBoxSize = innerW; // 340x340px persegi sempurna
+      const gridPad = 7;
+      const gridGap = 6;
+      const tileSize = (gridBoxSize - gridPad * 2 - gridGap * 2) / 3; // 104.666px persegi
+
+      roundRect(gridBoxX, gridBoxY, gridBoxSize, gridBoxSize, 16);
+      ctx.fillStyle = '#F1F5F9';
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.stroke();
+
+      // Fungsi pembungkus baris teks (word wrap)
+      function wrapLines(text, maxWidth, maxLines) {
+        const words = String(text || '').split(/\s+/);
+        const lines = [];
+        let cur = '';
+        for (let w of words) {
+          const test = cur ? cur + ' ' + w : w;
+          if (ctx.measureText(test).width > maxWidth && cur) {
+            lines.push(cur);
+            cur = w;
+            if (lines.length === maxLines - 1) break;
+          } else {
+            cur = test;
+          }
+        }
+        if (cur && lines.length < maxLines) lines.push(cur);
+        return lines;
       }
-    });
 
-    exportWrapper.appendChild(clone);
-    document.body.appendChild(exportWrapper);
+      // Render ke-9 Tile
+      feedGrid.forEach((tile, idx) => {
+        const col = idx % 3;
+        const row = Math.floor(idx / 3);
+        const tx = gridBoxX + gridPad + col * (tileSize + gridGap);
+        const ty = gridBoxY + gridPad + row * (tileSize + gridGap);
 
-    html2canvas(exportWrapper, {
-      scale: 3, // Resolusi tinggi setara @3x iPhone (1380px width)
-      backgroundColor: '#F8FAFC',
-      useCORS: true,
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      width: exportWrapper.offsetWidth,
-      height: exportWrapper.offsetHeight,
-      windowWidth: 1200,
-      windowHeight: exportWrapper.offsetHeight + 100
-    }).then(canvas => {
-      document.body.removeChild(exportWrapper);
+        const cStr = String(tile.color || '');
+        let txtColor = '#FFFFFF';
+        let hasBorder = false;
+
+        ctx.save();
+        roundRect(tx, ty, tileSize, tileSize, 12);
+        if (cStr.includes('brandLime')) {
+          ctx.fillStyle = '#CCFF00';
+          txtColor = '#0F172A';
+        } else if (cStr.includes('slate-900')) {
+          ctx.fillStyle = '#0F172A';
+          txtColor = '#FFFFFF';
+        } else if (cStr.includes('gradient')) {
+          const g = ctx.createLinearGradient(tx, ty + tileSize, tx + tileSize, ty);
+          g.addColorStop(0, '#EC4899');
+          g.addColorStop(1, '#9333EA');
+          ctx.fillStyle = g;
+          txtColor = '#FFFFFF';
+        } else if (cStr.includes('bg-white')) {
+          ctx.fillStyle = '#FFFFFF';
+          txtColor = '#0F172A';
+          hasBorder = true;
+        } else {
+          ctx.fillStyle = '#5338FF';
+          txtColor = '#FFFFFF';
+        }
+        ctx.fill();
+
+        if (hasBorder) {
+          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = '#CBD5E1';
+          ctx.stroke();
+        }
+        ctx.clip(); // Pastikan isi tile tidak pernah keluar dari kotak
+
+        // Sub-teks di kiri atas
+        ctx.save();
+        ctx.fillStyle = txtColor;
+        ctx.globalAlpha = 0.78;
+        ctx.font = `900 8.5px ${fontSans}`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const subRaw = String(tile.sub || 'POST').toUpperCase();
+        const maxSubW = tile.type === 'single' ? tileSize - 20 : tileSize - 50;
+        let subTxt = subRaw;
+        while (ctx.measureText(subTxt).width > maxSubW && subTxt.length > 1) {
+          subTxt = subTxt.slice(0, -1);
+        }
+        ctx.fillText(subTxt, tx + 10, ty + 15);
+        ctx.restore();
+
+        // Badge Carousel / Reel di kanan atas (Simetris)
+        if (tile.type === 'carousel') {
+          const bW = 28;
+          const bH = 16;
+          const bX = tx + tileSize - bW - 7;
+          const bY = ty + 7;
+          roundRect(bX, bY, bW, bH, 5);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+          ctx.fill();
+
+          // Ikon Layers kecil + angka slides sejajar vertikal
+          const icX = bX + 8;
+          const icY = bY + bH / 2;
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(icX - 3.5, icY - 1.5);
+          ctx.lineTo(icX, icY - 3.5);
+          ctx.lineTo(icX + 3.5, icY - 1.5);
+          ctx.lineTo(icX, icY + 0.5);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(icX - 3.5, icY + 1.2);
+          ctx.lineTo(icX, icY + 3.2);
+          ctx.lineTo(icX + 3.5, icY + 1.2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = `800 8.5px ${fontSans}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(tile.slides || 5), bX + 20, icY + 0.5);
+        } else if (tile.type === 'reel') {
+          const bW = 20;
+          const bH = 16;
+          const bX = tx + tileSize - bW - 7;
+          const bY = ty + 7;
+          roundRect(bX, bY, bW, bH, 5);
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+          ctx.fill();
+
+          const icX = bX + bW / 2;
+          const icY = bY + bH / 2;
+          ctx.strokeStyle = '#FFFFFF';
+          ctx.lineWidth = 1.2;
+          roundRect(icX - 4.5, icY - 3, 6.5, 6, 1.2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(icX + 2, icY - 1.2);
+          ctx.lineTo(icX + 4.5, icY - 2.6);
+          ctx.lineTo(icX + 4.5, icY + 2.6);
+          ctx.lineTo(icX + 2, icY + 1.2);
+          ctx.closePath();
+          ctx.stroke();
+        }
+
+        // Judul Utama Tile (Rata Tengah Vertikal secara Presisi)
+        ctx.fillStyle = txtColor;
+        ctx.font = `800 11px ${fontSans}`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const lines = wrapLines(tile.title, tileSize - 20, 3);
+        const lineH = 13.5;
+        const totalTextH = (lines.length - 1) * lineH;
+        const startY = ty + tileSize / 2 - totalTextH / 2 + 2;
+        lines.forEach((line, lIdx) => {
+          ctx.fillText(line, tx + 10, startY + lIdx * lineH);
+        });
+
+        // Nomor Urut #1..#9 di kanan bawah dengan jarak aman (tidak menabrak garis)
+        ctx.save();
+        ctx.fillStyle = txtColor;
+        ctx.globalAlpha = 0.60;
+        ctx.font = `700 8.5px ${fontSans}`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('#' + (idx + 1), tx + tileSize - 9, ty + tileSize - 8);
+        ctx.restore();
+
+        ctx.restore();
+      });
+
+      // 6. Bottom Navigation Bar (5 Ikon Sejajar & Simetris)
+      const navY = gridBoxY + gridBoxSize + 28;
+      const step = innerW / 5;
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      // Ikon 1: Home (Aktif)
+      const c1 = innerX + step * 0.5;
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(c1 - 8, navY - 1);
+      ctx.lineTo(c1, navY - 8);
+      ctx.lineTo(c1 + 8, navY - 1);
+      ctx.lineTo(c1 + 8, navY + 8);
+      ctx.lineTo(c1 - 8, navY + 8);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(c1 - 2.5, navY + 8);
+      ctx.lineTo(c1 - 2.5, navY + 2);
+      ctx.lineTo(c1 + 2.5, navY + 2);
+      ctx.lineTo(c1 + 2.5, navY + 8);
+      ctx.stroke();
+
+      // Ikon 2: Search
+      const c2 = innerX + step * 1.5;
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(c2 - 1, navY - 1, 6.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(c2 + 3.8, navY + 3.8);
+      ctx.lineTo(c2 + 8, navY + 8);
+      ctx.stroke();
+
+      // Ikon 3: Plus Square
+      const c3 = innerX + step * 2.5;
+      roundRect(c3 - 8, navY - 8, 16, 16, 3.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(c3, navY - 3.5);
+      ctx.lineTo(c3, navY + 3.5);
+      ctx.moveTo(c3 - 3.5, navY);
+      ctx.lineTo(c3 + 3.5, navY);
+      ctx.stroke();
+
+      // Ikon 4: Film / Reels
+      const c4 = innerX + step * 3.5;
+      roundRect(c4 - 8, navY - 8, 16, 16, 3.5);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(c4 - 3.5, navY - 8);
+      ctx.lineTo(c4 - 3.5, navY + 8);
+      ctx.moveTo(c4 + 3.5, navY - 8);
+      ctx.lineTo(c4 + 3.5, navY + 8);
+      ctx.moveTo(c4 - 8, navY);
+      ctx.lineTo(c4 + 8, navY);
+      ctx.stroke();
+
+      // Ikon 5: Avatar Kecil 'R' (Tepat di Tengah Lingkaran Ungu)
+      const c5 = innerX + step * 4.5;
+      ctx.beginPath();
+      ctx.arc(c5, navY, 11.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#5338FF';
+      ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = `800 10px ${fontSans}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('R', c5, navY + 0.5);
+
+      // Unduh File PNG
       const link = document.createElement('a');
       link.download = 'Reztroid_Feed_' + new Date().toISOString().slice(0,10) + '.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
-      
+
       addXP(25);
-      showToast('✅ Berhasil Diunduh!', 'Desain feed berhasil diekspor utuh tanpa terpotong! (+25 XP)');
+      showToast('✅ Berhasil Diunduh!', 'Desain feed diekspor dengan presisi simetris 100%! (+25 XP)');
       triggerMiniConfetti();
-    }).catch(err => {
-      if (document.body.contains(exportWrapper)) document.body.removeChild(exportWrapper);
+    } catch (err) {
       console.error('Export error:', err);
       showToast('❌ Gagal Ekspor', 'Terjadi kesalahan saat mengekspor gambar.');
-    });
-  }, 300);
+    }
+  }, 150);
 }
   </script>
 </body>
